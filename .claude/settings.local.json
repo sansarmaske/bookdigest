@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan make:model:*)"
+    ],
+    "deny": []
+  }
+}
