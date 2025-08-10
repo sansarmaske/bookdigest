@@ -13,7 +13,7 @@ class QuoteService
         protected GeminiService $geminiService
     ) {}
 
-    public function generateDailyQuotesForUser(User $user, int $maxBooks = 3): array
+    public function generateDailyQuotesForUser(User $user, int $maxBooks = null): array
     {
         try {
             $userBooks = $user->books()
@@ -30,7 +30,7 @@ class QuoteService
                 ];
             }
 
-            $selectedBooks = $this->selectRandomBooks($userBooks, $maxBooks);
+            $selectedBooks = $this->selectRandomBooks($userBooks, $maxBooks ?? $userBooks->count());
             $quotes = [];
             $failedBooks = [];
 
@@ -90,10 +90,15 @@ class QuoteService
         }
     }
 
-    protected function selectRandomBooks(Collection $books, int $maxBooks = 3): Collection
+    protected function selectRandomBooks(Collection $books, int $maxBooks = null): Collection
     {
         if ($books->isEmpty()) {
             return collect([]);
+        }
+        
+        // If no maxBooks specified, return all books
+        if ($maxBooks === null) {
+            return $books;
         }
         
         $count = min($maxBooks, max(1, $books->count()));
