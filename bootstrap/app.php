@@ -17,9 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withSchedule(function (Schedule $schedule): void {
-        $schedule->command('digest:send')->everyFiveMinutes();
-        $schedule->command('queue:retry all')->everyFiveMinutes();
-        $schedule->command('queue:work --once')->everyMinute()->withoutOverlapping();
+        $schedule->command('digest:send')->dailyAt('06:00')->timezone('America/New_York');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
