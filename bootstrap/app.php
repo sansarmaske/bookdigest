@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('digest:send')->dailyAt('11:00');
+        $schedule->command('queue:work --stop-when-empty')->everyFiveMinutes();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
