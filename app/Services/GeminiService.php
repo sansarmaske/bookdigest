@@ -9,25 +9,61 @@ class GeminiService
 {
     protected $apiKey;
     protected $baseUrl;
+    protected $model;
+    protected $timeout;
+    protected $maxOutputTokens;
+    protected $temperature;
+    protected $enabled;
 
     public function __construct()
     {
         $this->apiKey = config('services.gemini.api_key');
         $this->baseUrl = config('services.gemini.base_url');
+        $this->model = config('services.gemini.model');
+        $this->timeout = config('services.gemini.timeout');
+        $this->maxOutputTokens = config('services.gemini.max_output_tokens');
+        $this->temperature = config('services.gemini.temperature');
+        $this->enabled = config('services.gemini.enabled');
     }
 
-    public function generateQuote(string $bookTitle, string $author, ?string $description = '')
+    public function generateQuote(string $bookTitle, string $author, ?string $description = ''): array
     {
-        // Use fallback only if no API key is set
-        if (!$this->apiKey || $this->apiKey === 'your-gemini-api-key-here') {
+        if (empty($bookTitle) || empty($author)) {
+            Log::warning('Invalid input for quote generation', [
+                'title_empty' => empty($bookTitle),
+                'author_empty' => empty($author)
+            ]);
+            
+            return [
+                'success' => false,
+                'error' => 'Book title and author are required for quote generation.',
+                'quote' => null
+            ];
+        }
+
+        // Use fallback if service is disabled or no API key is configured
+        if (!$this->enabled || !$this->apiKey || $this->apiKey === 'your-gemini-api-key-here') {
+            Log::info('Using fallback quotes due to missing API configuration', [
+                'book' => $bookTitle,
+                'author' => $author
+            ]);
             return $this->getFallbackQuote($bookTitle, $author);
         }
 
         try {
             $prompt = $this->buildQuotePrompt($bookTitle, $author, $description);
+            
+            Log::debug('Making Gemini API request', [
+                'book' => $bookTitle,
+                'author' => $author,
+                'prompt_length' => strlen($prompt)
+            ]);
 
-            $response = Http::timeout(30)
-                ->post("{$this->baseUrl}/models/gemini-2.0-flash:generateContent?key={$this->apiKey}", [
+            $response = Http::timeout($this->timeout)
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
+                ])
+                ->post("{$this->baseUrl}/models/{$this->model}:generateContent?key={$this->apiKey}", [
                     'contents' => [
                         [
                             'parts' => [
@@ -38,39 +74,109 @@ class GeminiService
                         ]
                     ],
                     'generationConfig' => [
-                        'temperature' => 0.7,
+                        'temperature' => $this->temperature,
                         'topK' => 40,
                         'topP' => 0.95,
-                        'maxOutputTokens' => 500,
+                        'maxOutputTokens' => $this->maxOutputTokens,
+                        'stopSequences' => []
+                    ],
+                    'safetySettings' => [
+                        [
+                            'category' => 'HARM_CATEGORY_HARASSMENT',
+                            'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                        ],
+                        [
+                            'category' => 'HARM_CATEGORY_HATE_SPEECH',
+                            'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                        ],
+                        [
+                            'category' => 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+                            'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                        ],
+                        [
+                            'category' => 'HARM_CATEGORY_DANGEROUS_CONTENT',
+                            'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                        ]
                     ]
                 ]);
 
             if ($response->successful()) {
                 $data = $response->json();
+                
+                Log::debug('Gemini API response received', [
+                    'book' => $bookTitle,
+                    'response_status' => $response->status(),
+                    'has_candidates' => isset($data['candidates'])
+                ]);
 
                 if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+                    $quote = trim($data['candidates'][0]['content']['parts'][0]['text']);
+                    
+                    if (empty($quote)) {
+                        Log::warning('Empty quote received from Gemini API', [
+                            'book' => $bookTitle,
+                            'author' => $author
+                        ]);
+                        return $this->getFallbackQuote($bookTitle, $author);
+                    }
+                    
                     return [
                         'success' => true,
-                        'quote' => trim($data['candidates'][0]['content']['parts'][0]['text']),
+                        'quote' => $quote,
+                        'source' => 'gemini_api'
                     ];
+                }
+
+                if (isset($data['candidates'][0]['finishReason'])) {
+                    Log::warning('Gemini API content filtered', [
+                        'book' => $bookTitle,
+                        'author' => $author,
+                        'finish_reason' => $data['candidates'][0]['finishReason']
+                    ]);
                 }
             }
 
             Log::error('Gemini API Error', [
+                'book' => $bookTitle,
+                'author' => $author,
                 'status' => $response->status(),
-                'body' => $response->body()
+                'body' => $response->body(),
+                'headers' => $response->headers()
             ]);
 
             // Fallback to mock quote if API fails
             return $this->getFallbackQuote($bookTitle, $author);
-        } catch (\Exception $e) {
-            Log::error('Gemini Service Exception', [
+            
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            Log::error('Gemini API Connection Error', [
                 'message' => $e->getMessage(),
                 'book' => $bookTitle,
-                'author' => $author
+                'author' => $author,
+                'type' => 'connection_error'
             ]);
 
-            // Fallback to mock quote if API fails
+            return $this->getFallbackQuote($bookTitle, $author);
+            
+        } catch (\Illuminate\Http\Client\RequestException $e) {
+            Log::error('Gemini API Request Error', [
+                'message' => $e->getMessage(),
+                'book' => $bookTitle,
+                'author' => $author,
+                'type' => 'request_error',
+                'response_body' => $e->response?->body()
+            ]);
+
+            return $this->getFallbackQuote($bookTitle, $author);
+            
+        } catch (\Exception $e) {
+            Log::error('Gemini Service Unexpected Exception', [
+                'message' => $e->getMessage(),
+                'book' => $bookTitle,
+                'author' => $author,
+                'type' => 'unexpected_error',
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return $this->getFallbackQuote($bookTitle, $author);
         }
     }

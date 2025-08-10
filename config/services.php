@@ -37,7 +37,12 @@ return [
 
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),
-        'base_url' => 'https://generativelanguage.googleapis.com/v1beta',
+        'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta'),
+        'model' => env('GEMINI_MODEL', 'gemini-2.0-flash'),
+        'timeout' => env('GEMINI_TIMEOUT', 30),
+        'max_output_tokens' => env('GEMINI_MAX_OUTPUT_TOKENS', 500),
+        'temperature' => env('GEMINI_TEMPERATURE', 0.7),
+        'enabled' => env('GEMINI_ENABLED', true),
     ],
 
 ];

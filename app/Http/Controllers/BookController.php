@@ -2,82 +2,167 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreBookRequest;
 use App\Models\Book;
 use App\Services\QuoteService;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 
 class BookController extends Controller
 {
-    protected $quoteService;
+    public function __construct(
+        protected QuoteService $quoteService
+    ) {}
 
-    public function __construct(QuoteService $quoteService)
-    {
-        $this->quoteService = $quoteService;
-    }
-
-    public function index()
+    public function index(): View
     {
         $user = Auth::user();
-        $userBooks = $user->books()->with('users')->paginate(10);
+        $userBooks = $user->books()
+            ->with(['users' => function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            }])
+            ->orderBy('user_books.created_at', 'desc')
+            ->paginate(10);
         
         return view('books.index', compact('userBooks'));
     }
 
-    public function create()
+    public function create(): View
     {
         return view('books.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreBookRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'author' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'publication_year' => 'nullable|integer|min:1800|max:' . date('Y'),
-            'genre' => 'nullable|string|max:100',
-        ]);
+        try {
+            DB::beginTransaction();
+            
+            $validated = $request->validated();
+            
+            $book = Book::firstOrCreate(
+                [
+                    'title' => $validated['title'],
+                    'author' => $validated['author']
+                ],
+                $validated
+            );
 
-        $book = Book::firstOrCreate(
-            [
-                'title' => $validated['title'],
-                'author' => $validated['author']
-            ],
-            $validated
-        );
+            $user = Auth::user();
+            
+            if (!$user->books()->where('book_id', $book->id)->exists()) {
+                $user->books()->attach($book, [
+                    'read_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+                
+                Log::info('Book added to user library', [
+                    'user_id' => $user->id,
+                    'book_id' => $book->id,
+                    'book_title' => $book->title
+                ]);
+            }
 
-        $user = Auth::user();
-        if (!$user->books()->where('book_id', $book->id)->exists()) {
-            $user->books()->attach($book, ['read_at' => now()]);
-        }
-
-        return redirect()->route('books.index')
-            ->with('success', 'Book added to your reading list!');
-    }
-
-    public function destroy(Book $book)
-    {
-        Auth::user()->books()->detach($book);
-        
-        return redirect()->route('books.index')
-            ->with('success', 'Book removed from your reading list!');
-    }
-
-    public function generateQuote(Book $book)
-    {
-        $result = $this->quoteService->generateQuoteForSpecificBook($book);
-        
-        if ($result['success']) {
-            return response()->json([
-                'success' => true,
-                'quote' => $result['quote']
+            DB::commit();
+            
+            return redirect()->route('books.index')
+                ->with('success', 'Book added to your reading list successfully!');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Failed to add book to user library', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'book_data' => $request->validated()
             ]);
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to add book to your reading list. Please try again.');
         }
+    }
 
-        return response()->json([
-            'success' => false,
-            'error' => $result['error'] ?? 'Unknown error'
-        ], 500);
+    public function destroy(Book $book): RedirectResponse
+    {
+        $user = Auth::user();
+        
+        if (!$user->books()->where('book_id', $book->id)->exists()) {
+            return redirect()->route('books.index')
+                ->with('error', 'Book not found in your reading list.');
+        }
+        
+        try {
+            $user->books()->detach($book);
+            
+            Log::info('Book removed from user library', [
+                'user_id' => $user->id,
+                'book_id' => $book->id,
+                'book_title' => $book->title
+            ]);
+            
+            return redirect()->route('books.index')
+                ->with('success', 'Book removed from your reading list successfully!');
+                
+        } catch (\Exception $e) {
+            Log::error('Failed to remove book from user library', [
+                'user_id' => $user->id,
+                'book_id' => $book->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return redirect()->route('books.index')
+                ->with('error', 'Failed to remove book from your reading list. Please try again.');
+        }
+    }
+
+    public function generateQuote(Book $book): JsonResponse
+    {
+        $user = Auth::user();
+        
+        if (!$user->books()->where('book_id', $book->id)->exists()) {
+            return response()->json([
+                'success' => false,
+                'error' => 'You can only generate quotes for books in your reading list.'
+            ], 403);
+        }
+        
+        try {
+            $result = $this->quoteService->generateQuoteForSpecificBook($book);
+            
+            if ($result['success']) {
+                Log::info('Quote generated successfully', [
+                    'user_id' => $user->id,
+                    'book_id' => $book->id,
+                    'book_title' => $book->title
+                ]);
+                
+                return response()->json([
+                    'success' => true,
+                    'quote' => $result['quote']
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'error' => $result['error'] ?? 'Failed to generate quote'
+            ], 500);
+            
+        } catch (\Exception $e) {
+            Log::error('Quote generation failed', [
+                'user_id' => $user->id,
+                'book_id' => $book->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'error' => 'An unexpected error occurred while generating the quote.'
+            ], 500);
+        }
     }
 }
