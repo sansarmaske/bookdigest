@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\BookAutocompleteRequest;
-use App\Http\Requests\StoreBookRequest;
 use App\Models\Book;
-use App\Services\GeminiService;
+use Illuminate\View\View;
 use App\Services\QuoteService;
+use App\Services\GeminiService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\View\View;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\RedirectResponse;
+use App\Http\Requests\StoreBookRequest;
+use App\Http\Requests\BookAutocompleteRequest;
 
 class BookController extends Controller
 {

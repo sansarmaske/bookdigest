@@ -2,11 +2,11 @@
 
 namespace Tests\Unit;
 
-use App\Services\GeminiService;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
+use App\Services\GeminiService;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Config;
 
 class GeminiServiceTest extends TestCase
 {

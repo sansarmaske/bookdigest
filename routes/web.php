@@ -1,9 +1,9 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Support\Facades\Route;
 
 // Health check endpoints for monitoring
 Route::get('/health', [HealthController::class, 'check'])->name('health.check');

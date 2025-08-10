@@ -2,14 +2,14 @@
 
 namespace Tests\Unit;
 
-use App\Models\Book;
-use App\Models\User;
-use App\Services\GeminiService;
-use App\Services\QuoteService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Log;
 use Mockery;
 use Tests\TestCase;
+use App\Models\Book;
+use App\Models\User;
+use App\Services\QuoteService;
+use App\Services\GeminiService;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class QuoteServiceTest extends TestCase
 {
