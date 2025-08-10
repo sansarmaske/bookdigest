@@ -46,7 +46,7 @@ class QuoteServiceTest extends TestCase
         }
 
         $this->mockGeminiService->shouldReceive('generateQuote')
-            ->times(3) // Default max books
+            ->times(5) // Now includes all books by default
             ->andReturn([
                 'success' => true,
                 'quote' => 'Test quote content'
@@ -55,9 +55,9 @@ class QuoteServiceTest extends TestCase
         $result = $this->quoteService->generateDailyQuotesForUser($this->user);
 
         $this->assertTrue($result['success']);
-        $this->assertCount(3, $result['quotes']);
+        $this->assertCount(5, $result['quotes']);
         $this->assertEquals($this->user->id, $result['user']->id);
-        $this->assertStringContainsString('Successfully generated 3 quote(s)', $result['message']);
+        $this->assertStringContainsString('Successfully generated 5 quote(s)', $result['message']);
     }
 
     public function test_generate_daily_quotes_respects_max_books_parameter(): void
@@ -228,6 +228,15 @@ class QuoteServiceTest extends TestCase
         $result = $this->invokeMethod($this->quoteService, 'selectRandomBooks', [$books, 3]);
 
         $this->assertCount(3, $result);
+    }
+
+    public function test_select_random_books_with_null_max_returns_all_books(): void
+    {
+        $books = Book::factory()->count(10)->make();
+
+        $result = $this->invokeMethod($this->quoteService, 'selectRandomBooks', [$books, null]);
+
+        $this->assertCount(10, $result);
     }
 
     public function test_validate_book_with_valid_book(): void

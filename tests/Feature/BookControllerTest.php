@@ -218,13 +218,19 @@ class BookControllerTest extends TestCase
         $mockQuoteService = Mockery::mock(QuoteService::class);
         $mockQuoteService->shouldReceive('generateQuoteForSpecificBook')
             ->once()
-            ->with($book)
+            ->with(Mockery::on(function($arg) use ($book) {
+                return $arg instanceof Book && $arg->id === $book->id;
+            }))
             ->andReturn([
                 'success' => true,
                 'quote' => 'Test quote content'
             ]);
 
+        // Mock GeminiService as well since BookController now depends on it
+        $mockGeminiService = Mockery::mock(\App\Services\GeminiService::class);
+
         $this->app->instance(QuoteService::class, $mockQuoteService);
+        $this->app->instance(\App\Services\GeminiService::class, $mockGeminiService);
 
         $response = $this->actingAs($this->user)
             ->postJson("/books/{$book->id}/quote");
@@ -258,13 +264,19 @@ class BookControllerTest extends TestCase
         $mockQuoteService = Mockery::mock(QuoteService::class);
         $mockQuoteService->shouldReceive('generateQuoteForSpecificBook')
             ->once()
-            ->with($book)
+            ->with(Mockery::on(function($arg) use ($book) {
+                return $arg instanceof Book && $arg->id === $book->id;
+            }))
             ->andReturn([
                 'success' => false,
                 'error' => 'API error'
             ]);
 
+        // Mock GeminiService as well since BookController now depends on it
+        $mockGeminiService = Mockery::mock(\App\Services\GeminiService::class);
+
         $this->app->instance(QuoteService::class, $mockQuoteService);
+        $this->app->instance(\App\Services\GeminiService::class, $mockGeminiService);
 
         $response = $this->actingAs($this->user)
             ->postJson("/books/{$book->id}/quote");
