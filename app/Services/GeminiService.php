@@ -7,6 +7,12 @@ use Illuminate\Support\Facades\Log;
 
 class GeminiService
 {
+    // Constants for configuration
+    private const MIN_TITLE_LENGTH = 3;
+    private const BOOK_INFO_TEMPERATURE = 0.3;
+    private const BOOK_INFO_MAX_TOKENS = 1000;
+    private const SAFETY_THRESHOLD = 'BLOCK_MEDIUM_AND_ABOVE';
+    
     protected $apiKey;
     protected $baseUrl;
     protected $model;
@@ -219,6 +225,224 @@ class GeminiService
         return [
             'success' => true,
             'quote' => $quote['quote']
+        ];
+    }
+
+    public function getBookInfo(string $partialTitle): array
+    {
+        if (!$this->isValidTitleInput($partialTitle)) {
+            return $this->createErrorResponse('Title must be at least ' . self::MIN_TITLE_LENGTH . ' characters long.');
+        }
+
+        if (!$this->isServiceEnabled()) {
+            return $this->getFallbackBookSuggestions($partialTitle);
+        }
+
+        try {
+            return $this->fetchBookInfoFromApi($partialTitle);
+        } catch (\Exception $e) {
+            $this->logBookInfoError($e, $partialTitle);
+            return $this->getFallbackBookSuggestions($partialTitle);
+        }
+    }
+
+    private function isValidTitleInput(string $partialTitle): bool
+    {
+        return !empty($partialTitle) && strlen(trim($partialTitle)) >= self::MIN_TITLE_LENGTH;
+    }
+
+    private function isServiceEnabled(): bool
+    {
+        return $this->enabled && 
+               $this->apiKey && 
+               $this->apiKey !== 'your-gemini-api-key-here';
+    }
+
+    private function createErrorResponse(string $message): array
+    {
+        return [
+            'success' => false,
+            'error' => $message,
+            'suggestions' => []
+        ];
+    }
+
+    private function fetchBookInfoFromApi(string $partialTitle): array
+    {
+        $prompt = $this->buildBookInfoPrompt($partialTitle);
+        
+        Log::debug('Making Gemini API request for book info', [
+            'partial_title' => $partialTitle,
+            'prompt_length' => strlen($prompt)
+        ]);
+
+        $response = $this->makeApiRequest($prompt, $this->getBookInfoConfig());
+
+        if ($response->successful()) {
+            $data = $response->json();
+            
+            if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+                $responseText = trim($data['candidates'][0]['content']['parts'][0]['text']);
+                return $this->parseBookInfoResponse($responseText);
+            }
+        }
+
+        Log::error('Gemini API Error for book info', [
+            'partial_title' => $partialTitle,
+            'status' => $response->status(),
+            'body' => $response->body()
+        ]);
+
+        return $this->getFallbackBookSuggestions($partialTitle);
+    }
+
+    private function getBookInfoConfig(): array
+    {
+        return [
+            'temperature' => self::BOOK_INFO_TEMPERATURE,
+            'topK' => 40,
+            'topP' => 0.95,
+            'maxOutputTokens' => self::BOOK_INFO_MAX_TOKENS,
+            'stopSequences' => []
+        ];
+    }
+
+    private function getSafetySettings(): array
+    {
+        return [
+            ['category' => 'HARM_CATEGORY_HARASSMENT', 'threshold' => self::SAFETY_THRESHOLD],
+            ['category' => 'HARM_CATEGORY_HATE_SPEECH', 'threshold' => self::SAFETY_THRESHOLD],
+            ['category' => 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'threshold' => self::SAFETY_THRESHOLD],
+            ['category' => 'HARM_CATEGORY_DANGEROUS_CONTENT', 'threshold' => self::SAFETY_THRESHOLD]
+        ];
+    }
+
+    private function makeApiRequest(string $prompt, array $generationConfig): \Illuminate\Http\Client\Response
+    {
+        return Http::timeout($this->timeout)
+            ->withHeaders(['Content-Type' => 'application/json'])
+            ->post("{$this->baseUrl}/models/{$this->model}:generateContent?key={$this->apiKey}", [
+                'contents' => [
+                    ['parts' => [['text' => $prompt]]]
+                ],
+                'generationConfig' => $generationConfig,
+                'safetySettings' => $this->getSafetySettings()
+            ]);
+    }
+
+    private function logBookInfoError(\Exception $e, string $partialTitle): void
+    {
+        Log::error('Gemini Service Exception for book info', [
+            'message' => $e->getMessage(),
+            'partial_title' => $partialTitle,
+            'type' => 'unexpected_error'
+        ]);
+    }
+
+    protected function buildBookInfoPrompt(string $partialTitle): string
+    {
+        return "Based on the partial book title: '{$partialTitle}', please provide up to 3 book suggestions that match this title. For each book, provide ONLY the following information in this exact JSON format:
+
+{
+  \"suggestions\": [
+    {
+      \"title\": \"Full book title\",
+      \"author\": \"Author name\",
+      \"publication_year\": year,
+      \"genre\": \"Genre\",
+      \"description\": \"Brief description (2-3 sentences)\"
+    }
+  ]
+}
+
+Only include well-known, published books. Provide accurate information only.";
+    }
+
+    protected function parseBookInfoResponse(string $responseText): array
+    {
+        try {
+            // Try to extract JSON from the response
+            $jsonStart = strpos($responseText, '{');
+            $jsonEnd = strrpos($responseText, '}');
+            
+            if ($jsonStart !== false && $jsonEnd !== false) {
+                $jsonText = substr($responseText, $jsonStart, $jsonEnd - $jsonStart + 1);
+                $parsed = json_decode($jsonText, true);
+                
+                if (isset($parsed['suggestions']) && is_array($parsed['suggestions'])) {
+                    return [
+                        'success' => true,
+                        'suggestions' => $parsed['suggestions']
+                    ];
+                }
+            }
+            
+            return [
+                'success' => false,
+                'error' => 'Could not parse book information from response.',
+                'suggestions' => []
+            ];
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to parse book info response', [
+                'error' => $e->getMessage(),
+                'response_text' => $responseText
+            ]);
+            
+            return [
+                'success' => false,
+                'error' => 'Failed to parse book information.',
+                'suggestions' => []
+            ];
+        }
+    }
+
+    protected function getFallbackBookSuggestions(string $partialTitle): array
+    {
+        $fallbackSuggestions = [
+            'great' => [
+                [
+                    'title' => 'The Great Gatsby',
+                    'author' => 'F. Scott Fitzgerald',
+                    'publication_year' => 1925,
+                    'genre' => 'Fiction',
+                    'description' => 'A classic American novel about the Jazz Age and the American Dream. The story follows Nick Carraway as he observes the tragic story of Jay Gatsby.'
+                ]
+            ],
+            '1984' => [
+                [
+                    'title' => '1984',
+                    'author' => 'George Orwell',
+                    'publication_year' => 1949,
+                    'genre' => 'Dystopian Fiction',
+                    'description' => 'A dystopian social science fiction novel about totalitarian control. The story follows Winston Smith as he struggles against the oppressive regime of Big Brother.'
+                ]
+            ],
+            'pride' => [
+                [
+                    'title' => 'Pride and Prejudice',
+                    'author' => 'Jane Austen',
+                    'publication_year' => 1813,
+                    'genre' => 'Romance',
+                    'description' => 'A romantic novel that follows Elizabeth Bennet as she deals with issues of manners, upbringing, morality, education, and marriage.'
+                ]
+            ]
+        ];
+
+        $partialTitleLower = strtolower($partialTitle);
+        
+        foreach ($fallbackSuggestions as $key => $suggestions) {
+            if (strpos($partialTitleLower, $key) !== false) {
+                return [
+                    'success' => true,
+                    'suggestions' => $suggestions
+                ];
+            }
+        }
+
+        return [
+            'success' => true,
+            'suggestions' => []
         ];
     }
 }

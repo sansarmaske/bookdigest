@@ -28,6 +28,9 @@ Route::middleware('auth')->group(function () {
     
     Route::resource('books', BookController::class)->except(['show', 'edit', 'update']);
     
+    // Book autocomplete endpoint
+    Route::get('/api/books/autocomplete', [BookController::class, 'autocomplete'])->name('books.autocomplete');
+    
     // Rate-limited quote generation - 10 requests per minute per user
     Route::middleware('throttle:quotes')->group(function () {
         Route::post('/books/{book}/quote', [BookController::class, 'generateQuote'])->name('books.generate-quote');

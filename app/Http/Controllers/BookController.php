@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BookAutocompleteRequest;
 use App\Http\Requests\StoreBookRequest;
 use App\Models\Book;
+use App\Services\GeminiService;
 use App\Services\QuoteService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -15,7 +17,8 @@ use Illuminate\View\View;
 class BookController extends Controller
 {
     public function __construct(
-        protected QuoteService $quoteService
+        protected QuoteService $quoteService,
+        protected GeminiService $geminiService
     ) {}
 
     public function index(): View
@@ -164,5 +167,46 @@ class BookController extends Controller
                 'error' => 'An unexpected error occurred while generating the quote.'
             ], 500);
         }
+    }
+
+    public function autocomplete(BookAutocompleteRequest $request): JsonResponse
+    {
+        try {
+            $partialTitle = $request->validated()['title'];
+            $result = $this->geminiService->getBookInfo($partialTitle);
+            
+            $this->logAutocompleteRequest($partialTitle, $result);
+
+            return response()->json($result);
+            
+        } catch (\Exception $e) {
+            $this->logAutocompleteError($e, $request->input('title'));
+            
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to fetch book suggestions.',
+                'suggestions' => []
+            ], 500);
+        }
+    }
+
+    private function logAutocompleteRequest(string $partialTitle, array $result): void
+    {
+        Log::info('Book autocomplete request', [
+            'user_id' => Auth::id(),
+            'partial_title' => $partialTitle,
+            'success' => $result['success'],
+            'suggestions_count' => count($result['suggestions'] ?? [])
+        ]);
+    }
+
+    private function logAutocompleteError(\Exception $e, ?string $partialTitle): void
+    {
+        Log::error('Book autocomplete failed', [
+            'user_id' => Auth::id(),
+            'partial_title' => $partialTitle,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
     }
 }
