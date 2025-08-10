@@ -1,3 +1,16 @@
+# Book Digest
+
+Book Digest is an application that sends you daily email digests featuring memorable passages from books you've read. Stay connected with literature through curated excerpts delivered to your inbox, helping you reflect on and revisit the meaningful moments from your reading journey.
+
+## Features
+
+- Daily email digests with book passages
+- Personal library management of books you've read
+- AI-powered passage selection and analysis
+- Customizable digest preferences
+
+---
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
