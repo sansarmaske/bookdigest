@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Mail\DailyBookDigest;
 use App\Models\User;
+use App\Mail\DailyBookDigest;
 use App\Services\QuoteService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;

@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
+use Mockery;
+use Tests\TestCase;
 use App\Models\Book;
 use App\Models\User;
 use App\Services\QuoteService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
-use Mockery;
-use Tests\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class BookControllerTest extends TestCase
 {
