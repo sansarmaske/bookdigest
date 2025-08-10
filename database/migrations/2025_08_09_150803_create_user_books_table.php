@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('book_id')->constrained()->onDelete('cascade');
             $table->timestamp('read_at')->nullable();
             $table->timestamps();
-            
+
             $table->unique(['user_id', 'book_id']);
         });
     }

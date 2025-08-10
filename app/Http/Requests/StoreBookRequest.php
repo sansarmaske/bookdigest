@@ -17,7 +17,7 @@ class StoreBookRequest extends FormRequest
             'title' => 'required|string|max:255|min:1',
             'author' => 'required|string|max:255|min:1',
             'description' => 'nullable|string|max:2000',
-            'publication_year' => 'nullable|integer|min:1000|max:' . (date('Y') + 1),
+            'publication_year' => 'nullable|integer|min:1000|max:'.(date('Y') + 1),
             'genre' => 'nullable|string|max:100',
         ];
     }

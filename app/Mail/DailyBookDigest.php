@@ -15,6 +15,7 @@ class DailyBookDigest extends Mailable // implements ShouldQueue - disabled for 
     use Queueable, SerializesModels;
 
     public $user;
+
     public $quotes;
 
     /**
@@ -32,7 +33,7 @@ class DailyBookDigest extends Mailable // implements ShouldQueue - disabled for 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your Daily Book Quotes - ' . now()->format('F j, Y'),
+            subject: 'Your Daily Book Quotes - '.now()->format('F j, Y'),
         );
     }
 
@@ -46,7 +47,7 @@ class DailyBookDigest extends Mailable // implements ShouldQueue - disabled for 
             with: [
                 'user' => $this->user,
                 'quotes' => $this->quotes,
-                'date' => now()->format('F j, Y')
+                'date' => now()->format('F j, Y'),
             ]
         );
     }

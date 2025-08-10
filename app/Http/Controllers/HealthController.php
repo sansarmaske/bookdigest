@@ -18,17 +18,17 @@ class HealthController extends Controller
                 'storage' => $this->checkStorage(),
             ];
 
-            $allHealthy = collect($checks)->every(fn($check) => $check['status'] === 'ok');
+            $allHealthy = collect($checks)->every(fn ($check) => $check['status'] === 'ok');
 
             $response = [
                 'status' => $allHealthy ? 'ok' : 'error',
                 'timestamp' => now()->toISOString(),
-                'checks' => $checks
+                'checks' => $checks,
             ];
 
             $statusCode = $allHealthy ? 200 : 503;
 
-            if (!$allHealthy) {
+            if (! $allHealthy) {
                 Log::warning('Health check failed', $response);
             }
 
@@ -37,13 +37,13 @@ class HealthController extends Controller
         } catch (\Exception $e) {
             Log::error('Health check exception', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'status' => 'error',
                 'timestamp' => now()->toISOString(),
-                'error' => 'Health check failed'
+                'error' => 'Health check failed',
             ], 503);
         }
     }
@@ -53,7 +53,7 @@ class HealthController extends Controller
         return response()->json([
             'status' => 'ok',
             'timestamp' => now()->toISOString(),
-            'message' => 'Service is alive'
+            'message' => 'Service is alive',
         ]);
     }
 
@@ -66,14 +66,14 @@ class HealthController extends Controller
             return response()->json([
                 'status' => 'ready',
                 'timestamp' => now()->toISOString(),
-                'message' => 'Service is ready to receive traffic'
+                'message' => 'Service is ready to receive traffic',
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'not_ready',
                 'timestamp' => now()->toISOString(),
-                'message' => 'Service is not ready to receive traffic'
+                'message' => 'Service is not ready to receive traffic',
             ], 503);
         }
     }
@@ -88,14 +88,14 @@ class HealthController extends Controller
             return [
                 'status' => 'ok',
                 'response_time_ms' => $duration,
-                'message' => 'Database connection successful'
+                'message' => 'Database connection successful',
             ];
 
         } catch (\Exception $e) {
             return [
                 'status' => 'error',
                 'message' => 'Database connection failed',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
@@ -103,9 +103,9 @@ class HealthController extends Controller
     protected function checkCache(): array
     {
         try {
-            $key = 'health_check_' . time();
+            $key = 'health_check_'.time();
             $value = 'test_value';
-            
+
             $start = microtime(true);
             Cache::put($key, $value, 60);
             $retrieved = Cache::get($key);
@@ -116,12 +116,12 @@ class HealthController extends Controller
                 return [
                     'status' => 'ok',
                     'response_time_ms' => $duration,
-                    'message' => 'Cache is working'
+                    'message' => 'Cache is working',
                 ];
             } else {
                 return [
                     'status' => 'error',
-                    'message' => 'Cache value mismatch'
+                    'message' => 'Cache value mismatch',
                 ];
             }
 
@@ -129,7 +129,7 @@ class HealthController extends Controller
             return [
                 'status' => 'error',
                 'message' => 'Cache check failed',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
@@ -138,8 +138,8 @@ class HealthController extends Controller
     {
         try {
             $testFile = storage_path('app/health_check_test.txt');
-            $testContent = 'health_check_' . time();
-            
+            $testContent = 'health_check_'.time();
+
             $start = microtime(true);
             file_put_contents($testFile, $testContent);
             $retrieved = file_get_contents($testFile);
@@ -150,12 +150,12 @@ class HealthController extends Controller
                 return [
                     'status' => 'ok',
                     'response_time_ms' => $duration,
-                    'message' => 'Storage is writable'
+                    'message' => 'Storage is writable',
                 ];
             } else {
                 return [
                     'status' => 'error',
-                    'message' => 'Storage content mismatch'
+                    'message' => 'Storage content mismatch',
                 ];
             }
 
@@ -163,7 +163,7 @@ class HealthController extends Controller
             return [
                 'status' => 'error',
                 'message' => 'Storage check failed',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }

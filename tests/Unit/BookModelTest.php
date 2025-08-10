@@ -13,8 +13,8 @@ class BookModelTest extends TestCase
 
     public function test_fillable_attributes(): void
     {
-        $book = new Book();
-        
+        $book = new Book;
+
         $expected = [
             'title',
             'author',
@@ -29,7 +29,7 @@ class BookModelTest extends TestCase
     public function test_casts_attributes_correctly(): void
     {
         $book = Book::factory()->create([
-            'publication_year' => '2020'
+            'publication_year' => '2020',
         ]);
 
         $this->assertIsInt($book->publication_year);
@@ -41,7 +41,7 @@ class BookModelTest extends TestCase
     {
         $book = Book::factory()->create();
         $user = User::factory()->create();
-        
+
         $user->addBook($book);
 
         $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class, $book->users());
@@ -52,7 +52,7 @@ class BookModelTest extends TestCase
     {
         $book = Book::factory()->create([
             'title' => 'Test Book',
-            'author' => 'Test Author'
+            'author' => 'Test Author',
         ]);
 
         $this->assertEquals('Test Book by Test Author', $book->display_name);
@@ -163,14 +163,14 @@ class BookModelTest extends TestCase
             'title' => 'The Great Gatsby',
             'author' => 'F. Scott Fitzgerald',
             'description' => 'A classic American novel',
-            'genre' => 'Fiction'
+            'genre' => 'Fiction',
         ]);
-        
+
         Book::factory()->create([
             'title' => '1984',
             'author' => 'George Orwell',
             'description' => 'Dystopian social science fiction',
-            'genre' => 'Science Fiction'
+            'genre' => 'Science Fiction',
         ]);
 
         $gatsbyResults = Book::search('Gatsby')->get();
@@ -186,8 +186,8 @@ class BookModelTest extends TestCase
 
     public function test_route_key_name(): void
     {
-        $book = new Book();
-        
+        $book = new Book;
+
         $this->assertEquals('id', $book->getRouteKeyName());
     }
 
@@ -197,7 +197,7 @@ class BookModelTest extends TestCase
             'title' => '  Trimmed Title  ',
             'author' => '  Trimmed Author  ',
             'description' => '  Trimmed Description  ',
-            'genre' => '  Trimmed Genre  '
+            'genre' => '  Trimmed Genre  ',
         ]);
 
         $this->assertEquals('Trimmed Title', $book->title);
@@ -209,12 +209,12 @@ class BookModelTest extends TestCase
     public function test_boot_trims_whitespace_on_update(): void
     {
         $book = Book::factory()->create();
-        
+
         $book->update([
             'title' => '  Updated Title  ',
             'author' => '  Updated Author  ',
             'description' => '  Updated Description  ',
-            'genre' => '  Updated Genre  '
+            'genre' => '  Updated Genre  ',
         ]);
 
         $this->assertEquals('Updated Title', $book->title);
@@ -229,7 +229,7 @@ class BookModelTest extends TestCase
             'title' => 'Valid Title',
             'author' => 'Valid Author',
             'description' => null,
-            'genre' => null
+            'genre' => null,
         ]);
 
         $this->assertEquals('Valid Title', $book->title);
@@ -243,7 +243,7 @@ class BookModelTest extends TestCase
         $book = Book::factory()->create([
             'title' => 'Test Book',
             'author' => 'Test Author',
-            'publication_year' => 1945
+            'publication_year' => 1945,
         ]);
 
         $array = $book->toArray();

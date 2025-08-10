@@ -16,7 +16,9 @@ class QuoteServiceTest extends TestCase
     use RefreshDatabase;
 
     protected QuoteService $quoteService;
+
     protected GeminiService $mockGeminiService;
+
     protected User $user;
 
     protected function setUp(): void
@@ -49,7 +51,7 @@ class QuoteServiceTest extends TestCase
             ->times(5) // Now includes all books by default
             ->andReturn([
                 'success' => true,
-                'quote' => 'Test quote content'
+                'quote' => 'Test quote content',
             ]);
 
         $result = $this->quoteService->generateDailyQuotesForUser($this->user);
@@ -71,7 +73,7 @@ class QuoteServiceTest extends TestCase
             ->times(2) // Custom max books
             ->andReturn([
                 'success' => true,
-                'quote' => 'Test quote content'
+                'quote' => 'Test quote content',
             ]);
 
         $result = $this->quoteService->generateDailyQuotesForUser($this->user, 2);
@@ -92,7 +94,7 @@ class QuoteServiceTest extends TestCase
             ->andReturnUsing(function () {
                 static $callCount = 0;
                 $callCount++;
-                
+
                 if ($callCount <= 2) {
                     return ['success' => true, 'quote' => 'Success quote'];
                 } else {
@@ -121,7 +123,7 @@ class QuoteServiceTest extends TestCase
             ->times(2)
             ->andReturn([
                 'success' => false,
-                'error' => 'API failure'
+                'error' => 'API failure',
             ]);
 
         $result = $this->quoteService->generateDailyQuotesForUser($this->user);
@@ -143,7 +145,7 @@ class QuoteServiceTest extends TestCase
             ->once()
             ->andReturn([
                 'success' => true,
-                'quote' => 'Test quote'
+                'quote' => 'Test quote',
             ]);
 
         $this->quoteService->generateDailyQuotesForUser($this->user);
@@ -162,7 +164,7 @@ class QuoteServiceTest extends TestCase
             ->with($book->title, $book->author, $book->description ?? '')
             ->andReturn([
                 'success' => true,
-                'quote' => 'Specific quote content'
+                'quote' => 'Specific quote content',
             ]);
 
         $result = $this->quoteService->generateQuoteForSpecificBook($book);
@@ -173,7 +175,7 @@ class QuoteServiceTest extends TestCase
 
     public function test_generate_quote_for_specific_book_with_invalid_book(): void
     {
-        $invalidBook = new Book();
+        $invalidBook = new Book;
 
         $result = $this->quoteService->generateQuoteForSpecificBook($invalidBook);
 
@@ -243,7 +245,7 @@ class QuoteServiceTest extends TestCase
     {
         $book = Book::factory()->make([
             'title' => 'Valid Title',
-            'author' => 'Valid Author'
+            'author' => 'Valid Author',
         ]);
 
         $result = $this->quoteService->validateBook($book);

@@ -9,16 +9,25 @@ class GeminiService
 {
     // Constants for configuration
     private const MIN_TITLE_LENGTH = 3;
+
     private const BOOK_INFO_TEMPERATURE = 0.3;
+
     private const BOOK_INFO_MAX_TOKENS = 1000;
+
     private const SAFETY_THRESHOLD = 'BLOCK_MEDIUM_AND_ABOVE';
-    
+
     protected $apiKey;
+
     protected $baseUrl;
+
     protected $model;
+
     protected $timeout;
+
     protected $maxOutputTokens;
+
     protected $temperature;
+
     protected $enabled;
 
     public function __construct()
@@ -37,32 +46,33 @@ class GeminiService
         if (empty($bookTitle) || empty($author)) {
             Log::warning('Invalid input for quote generation', [
                 'title_empty' => empty($bookTitle),
-                'author_empty' => empty($author)
+                'author_empty' => empty($author),
             ]);
-            
+
             return [
                 'success' => false,
                 'error' => 'Book title and author are required for quote generation.',
-                'quote' => null
+                'quote' => null,
             ];
         }
 
         // Use fallback if service is disabled or no API key is configured
-        if (!$this->enabled || !$this->apiKey || $this->apiKey === 'your-gemini-api-key-here') {
+        if (! $this->enabled || ! $this->apiKey || $this->apiKey === 'your-gemini-api-key-here') {
             Log::info('Using fallback quotes due to missing API configuration', [
                 'book' => $bookTitle,
-                'author' => $author
+                'author' => $author,
             ]);
+
             return $this->getFallbackQuote($bookTitle, $author);
         }
 
         try {
             $prompt = $this->buildQuotePrompt($bookTitle, $author, $description);
-            
+
             Log::debug('Making Gemini API request', [
                 'book' => $bookTitle,
                 'author' => $author,
-                'prompt_length' => strlen($prompt)
+                'prompt_length' => strlen($prompt),
             ]);
 
             $response = Http::timeout($this->timeout)
@@ -74,62 +84,63 @@ class GeminiService
                         [
                             'parts' => [
                                 [
-                                    'text' => $prompt
-                                ]
-                            ]
-                        ]
+                                    'text' => $prompt,
+                                ],
+                            ],
+                        ],
                     ],
                     'generationConfig' => [
                         'temperature' => $this->temperature,
                         'topK' => 40,
                         'topP' => 0.95,
                         'maxOutputTokens' => $this->maxOutputTokens,
-                        'stopSequences' => []
+                        'stopSequences' => [],
                     ],
                     'safetySettings' => [
                         [
                             'category' => 'HARM_CATEGORY_HARASSMENT',
-                            'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                            'threshold' => 'BLOCK_MEDIUM_AND_ABOVE',
                         ],
                         [
                             'category' => 'HARM_CATEGORY_HATE_SPEECH',
-                            'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                            'threshold' => 'BLOCK_MEDIUM_AND_ABOVE',
                         ],
                         [
                             'category' => 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-                            'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                            'threshold' => 'BLOCK_MEDIUM_AND_ABOVE',
                         ],
                         [
                             'category' => 'HARM_CATEGORY_DANGEROUS_CONTENT',
-                            'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
-                        ]
-                    ]
+                            'threshold' => 'BLOCK_MEDIUM_AND_ABOVE',
+                        ],
+                    ],
                 ]);
 
             if ($response->successful()) {
                 $data = $response->json();
-                
+
                 Log::debug('Gemini API response received', [
                     'book' => $bookTitle,
                     'response_status' => $response->status(),
-                    'has_candidates' => isset($data['candidates'])
+                    'has_candidates' => isset($data['candidates']),
                 ]);
 
                 if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
                     $quote = trim($data['candidates'][0]['content']['parts'][0]['text']);
-                    
+
                     if (empty($quote)) {
                         Log::warning('Empty quote received from Gemini API', [
                             'book' => $bookTitle,
-                            'author' => $author
+                            'author' => $author,
                         ]);
+
                         return $this->getFallbackQuote($bookTitle, $author);
                     }
-                    
+
                     return [
                         'success' => true,
                         'quote' => $quote,
-                        'source' => 'gemini_api'
+                        'source' => 'gemini_api',
                     ];
                 }
 
@@ -137,7 +148,7 @@ class GeminiService
                     Log::warning('Gemini API content filtered', [
                         'book' => $bookTitle,
                         'author' => $author,
-                        'finish_reason' => $data['candidates'][0]['finishReason']
+                        'finish_reason' => $data['candidates'][0]['finishReason'],
                     ]);
                 }
             }
@@ -147,40 +158,40 @@ class GeminiService
                 'author' => $author,
                 'status' => $response->status(),
                 'body' => $response->body(),
-                'headers' => $response->headers()
+                'headers' => $response->headers(),
             ]);
 
             // Fallback to mock quote if API fails
             return $this->getFallbackQuote($bookTitle, $author);
-            
+
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             Log::error('Gemini API Connection Error', [
                 'message' => $e->getMessage(),
                 'book' => $bookTitle,
                 'author' => $author,
-                'type' => 'connection_error'
+                'type' => 'connection_error',
             ]);
 
             return $this->getFallbackQuote($bookTitle, $author);
-            
+
         } catch (\Illuminate\Http\Client\RequestException $e) {
             Log::error('Gemini API Request Error', [
                 'message' => $e->getMessage(),
                 'book' => $bookTitle,
                 'author' => $author,
                 'type' => 'request_error',
-                'response_body' => $e->response?->body()
+                'response_body' => $e->response?->body(),
             ]);
 
             return $this->getFallbackQuote($bookTitle, $author);
-            
+
         } catch (\Exception $e) {
             Log::error('Gemini Service Unexpected Exception', [
                 'message' => $e->getMessage(),
                 'book' => $bookTitle,
                 'author' => $author,
                 'type' => 'unexpected_error',
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return $this->getFallbackQuote($bookTitle, $author);
@@ -192,7 +203,7 @@ class GeminiService
         // Generate random variety elements to ensure different responses
         $passageTypes = [
             'a thought-provoking philosophical passage',
-            'a pivotal character development moment', 
+            'a pivotal character development moment',
             'a beautifully descriptive scene',
             'an emotionally powerful dialogue',
             'a passage that reveals the book\'s central theme',
@@ -200,9 +211,9 @@ class GeminiService
             'a memorable character interaction',
             'a passage with rich symbolism or metaphor',
             'a moment of internal conflict or revelation',
-            'a striking opening or closing passage from a chapter'
+            'a striking opening or closing passage from a chapter',
         ];
-        
+
         $analysisAngles = [
             'focus on the literary techniques used',
             'examine the character psychology',
@@ -213,32 +224,32 @@ class GeminiService
             'highlight the unique writing style',
             'examine the social commentary',
             'discuss how it connects to the overall narrative',
-            'analyze the use of language and imagery'
+            'analyze the use of language and imagery',
         ];
-        
+
         $randomPassageType = $passageTypes[array_rand($passageTypes)];
         $randomAnalysisAngle = $analysisAngles[array_rand($analysisAngles)];
         $randomSeed = mt_rand(1, 1000000);
-        
+
         $prompt = "Random seed: {$randomSeed}\n\n";
         $prompt .= "I need a book digest passage from '{$bookTitle}' by {$author}. ";
-        
-        if (!empty($description)) {
+
+        if (! empty($description)) {
             $prompt .= "Book context: {$description}. ";
         }
-        
+
         $prompt .= "Please select {$randomPassageType} and {$randomAnalysisAngle}.\n\n";
-        
+
         $prompt .= "IMPORTANT VARIETY REQUIREMENTS:\n";
         $prompt .= "- Choose a DIFFERENT section of the book each time\n";
         $prompt .= "- Vary your selection strategy (beginning, middle, end, or thematically significant moments)\n";
         $prompt .= "- For lesser-known books, draw from your training knowledge creatively but accurately\n";
         $prompt .= "- Avoid repeating the same passages or themes from previous requests\n";
         $prompt .= "- Focus on passages that showcase different aspects of the author's writing\n\n";
-        
+
         $prompt .= "Provide exactly one meaningful passage (1-2 paragraphs) with NO introductory text like 'Here's a passage' or 'From the book'. ";
         $prompt .= "Simply provide the passage content directly, ensuring it represents the book authentically and offers genuine literary insight.\n\n";
-        
+
         $prompt .= "The passage should be substantial enough to give readers a real taste of the author's voice and the book's essence.";
 
         return $prompt;
@@ -255,24 +266,24 @@ class GeminiService
             ],
             'default' => [
                 'quote' => "QUOTE: \"The best way to find out if you can trust somebody is to trust them.\"\n\nCONTEXT: This thought-provoking insight from \"{$bookTitle}\" by {$author} reminds us that trust is not just about others—it's about our willingness to be vulnerable and take meaningful risks in our relationships.",
-            ]
+            ],
         ];
 
         $quote = $fallbackQuotes[$bookTitle] ?? $fallbackQuotes['default'];
 
         return [
             'success' => true,
-            'quote' => $quote['quote']
+            'quote' => $quote['quote'],
         ];
     }
 
     public function getBookInfo(string $partialTitle): array
     {
-        if (!$this->isValidTitleInput($partialTitle)) {
-            return $this->createErrorResponse('Title must be at least ' . self::MIN_TITLE_LENGTH . ' characters long.');
+        if (! $this->isValidTitleInput($partialTitle)) {
+            return $this->createErrorResponse('Title must be at least '.self::MIN_TITLE_LENGTH.' characters long.');
         }
 
-        if (!$this->isServiceEnabled()) {
+        if (! $this->isServiceEnabled()) {
             return $this->getFallbackBookSuggestions($partialTitle);
         }
 
@@ -280,19 +291,20 @@ class GeminiService
             return $this->fetchBookInfoFromApi($partialTitle);
         } catch (\Exception $e) {
             $this->logBookInfoError($e, $partialTitle);
+
             return $this->getFallbackBookSuggestions($partialTitle);
         }
     }
 
     private function isValidTitleInput(string $partialTitle): bool
     {
-        return !empty($partialTitle) && strlen(trim($partialTitle)) >= self::MIN_TITLE_LENGTH;
+        return ! empty($partialTitle) && strlen(trim($partialTitle)) >= self::MIN_TITLE_LENGTH;
     }
 
     private function isServiceEnabled(): bool
     {
-        return $this->enabled && 
-               $this->apiKey && 
+        return $this->enabled &&
+               $this->apiKey &&
                $this->apiKey !== 'your-gemini-api-key-here';
     }
 
@@ -301,26 +313,27 @@ class GeminiService
         return [
             'success' => false,
             'error' => $message,
-            'suggestions' => []
+            'suggestions' => [],
         ];
     }
 
     private function fetchBookInfoFromApi(string $partialTitle): array
     {
         $prompt = $this->buildBookInfoPrompt($partialTitle);
-        
+
         Log::debug('Making Gemini API request for book info', [
             'partial_title' => $partialTitle,
-            'prompt_length' => strlen($prompt)
+            'prompt_length' => strlen($prompt),
         ]);
 
         $response = $this->makeApiRequest($prompt, $this->getBookInfoConfig());
 
         if ($response->successful()) {
             $data = $response->json();
-            
+
             if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
                 $responseText = trim($data['candidates'][0]['content']['parts'][0]['text']);
+
                 return $this->parseBookInfoResponse($responseText);
             }
         }
@@ -328,7 +341,7 @@ class GeminiService
         Log::error('Gemini API Error for book info', [
             'partial_title' => $partialTitle,
             'status' => $response->status(),
-            'body' => $response->body()
+            'body' => $response->body(),
         ]);
 
         return $this->getFallbackBookSuggestions($partialTitle);
@@ -341,7 +354,7 @@ class GeminiService
             'topK' => 40,
             'topP' => 0.95,
             'maxOutputTokens' => self::BOOK_INFO_MAX_TOKENS,
-            'stopSequences' => []
+            'stopSequences' => [],
         ];
     }
 
@@ -351,7 +364,7 @@ class GeminiService
             ['category' => 'HARM_CATEGORY_HARASSMENT', 'threshold' => self::SAFETY_THRESHOLD],
             ['category' => 'HARM_CATEGORY_HATE_SPEECH', 'threshold' => self::SAFETY_THRESHOLD],
             ['category' => 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'threshold' => self::SAFETY_THRESHOLD],
-            ['category' => 'HARM_CATEGORY_DANGEROUS_CONTENT', 'threshold' => self::SAFETY_THRESHOLD]
+            ['category' => 'HARM_CATEGORY_DANGEROUS_CONTENT', 'threshold' => self::SAFETY_THRESHOLD],
         ];
     }
 
@@ -361,10 +374,10 @@ class GeminiService
             ->withHeaders(['Content-Type' => 'application/json'])
             ->post("{$this->baseUrl}/models/{$this->model}:generateContent?key={$this->apiKey}", [
                 'contents' => [
-                    ['parts' => [['text' => $prompt]]]
+                    ['parts' => [['text' => $prompt]]],
                 ],
                 'generationConfig' => $generationConfig,
-                'safetySettings' => $this->getSafetySettings()
+                'safetySettings' => $this->getSafetySettings(),
             ]);
     }
 
@@ -373,7 +386,7 @@ class GeminiService
         Log::error('Gemini Service Exception for book info', [
             'message' => $e->getMessage(),
             'partial_title' => $partialTitle,
-            'type' => 'unexpected_error'
+            'type' => 'unexpected_error',
         ]);
     }
 
@@ -402,35 +415,35 @@ Only include well-known, published books. Provide accurate information only.";
             // Try to extract JSON from the response
             $jsonStart = strpos($responseText, '{');
             $jsonEnd = strrpos($responseText, '}');
-            
+
             if ($jsonStart !== false && $jsonEnd !== false) {
                 $jsonText = substr($responseText, $jsonStart, $jsonEnd - $jsonStart + 1);
                 $parsed = json_decode($jsonText, true);
-                
+
                 if (isset($parsed['suggestions']) && is_array($parsed['suggestions'])) {
                     return [
                         'success' => true,
-                        'suggestions' => $parsed['suggestions']
+                        'suggestions' => $parsed['suggestions'],
                     ];
                 }
             }
-            
+
             return [
                 'success' => false,
                 'error' => 'Could not parse book information from response.',
-                'suggestions' => []
+                'suggestions' => [],
             ];
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to parse book info response', [
                 'error' => $e->getMessage(),
-                'response_text' => $responseText
+                'response_text' => $responseText,
             ]);
-            
+
             return [
                 'success' => false,
                 'error' => 'Failed to parse book information.',
-                'suggestions' => []
+                'suggestions' => [],
             ];
         }
     }
@@ -444,8 +457,8 @@ Only include well-known, published books. Provide accurate information only.";
                     'author' => 'F. Scott Fitzgerald',
                     'publication_year' => 1925,
                     'genre' => 'Fiction',
-                    'description' => 'A classic American novel about the Jazz Age and the American Dream. The story follows Nick Carraway as he observes the tragic story of Jay Gatsby.'
-                ]
+                    'description' => 'A classic American novel about the Jazz Age and the American Dream. The story follows Nick Carraway as he observes the tragic story of Jay Gatsby.',
+                ],
             ],
             '1984' => [
                 [
@@ -453,8 +466,8 @@ Only include well-known, published books. Provide accurate information only.";
                     'author' => 'George Orwell',
                     'publication_year' => 1949,
                     'genre' => 'Dystopian Fiction',
-                    'description' => 'A dystopian social science fiction novel about totalitarian control. The story follows Winston Smith as he struggles against the oppressive regime of Big Brother.'
-                ]
+                    'description' => 'A dystopian social science fiction novel about totalitarian control. The story follows Winston Smith as he struggles against the oppressive regime of Big Brother.',
+                ],
             ],
             'pride' => [
                 [
@@ -462,25 +475,25 @@ Only include well-known, published books. Provide accurate information only.";
                     'author' => 'Jane Austen',
                     'publication_year' => 1813,
                     'genre' => 'Romance',
-                    'description' => 'A romantic novel that follows Elizabeth Bennet as she deals with issues of manners, upbringing, morality, education, and marriage.'
-                ]
-            ]
+                    'description' => 'A romantic novel that follows Elizabeth Bennet as she deals with issues of manners, upbringing, morality, education, and marriage.',
+                ],
+            ],
         ];
 
         $partialTitleLower = strtolower($partialTitle);
-        
+
         foreach ($fallbackSuggestions as $key => $suggestions) {
             if (strpos($partialTitleLower, $key) !== false) {
                 return [
                     'success' => true,
-                    'suggestions' => $suggestions
+                    'suggestions' => $suggestions,
                 ];
             }
         }
 
         return [
             'success' => true,
-            'suggestions' => []
+            'suggestions' => [],
         ];
     }
 }

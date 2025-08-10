@@ -28,7 +28,7 @@ class BookFactory extends Factory
                 'History',
                 'Self-Help',
                 'Poetry',
-                'Drama'
+                'Drama',
             ]),
             'created_at' => now(),
             'updated_at' => now(),

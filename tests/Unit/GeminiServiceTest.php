@@ -15,7 +15,7 @@ class GeminiServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         Config::set('services.gemini.api_key', 'test-api-key');
         Config::set('services.gemini.base_url', 'https://generativelanguage.googleapis.com/v1beta');
         Config::set('services.gemini.model', 'gemini-2.0-flash');
@@ -23,8 +23,8 @@ class GeminiServiceTest extends TestCase
         Config::set('services.gemini.max_output_tokens', 500);
         Config::set('services.gemini.temperature', 0.7);
         Config::set('services.gemini.enabled', true);
-        
-        $this->geminiService = new GeminiService();
+
+        $this->geminiService = new GeminiService;
     }
 
     public function test_generate_quote_with_empty_title(): void
@@ -41,7 +41,7 @@ class GeminiServiceTest extends TestCase
             ->once()
             ->with('Invalid input for quote generation', [
                 'title_empty' => true,
-                'author_empty' => false
+                'author_empty' => false,
             ]);
     }
 
@@ -59,7 +59,7 @@ class GeminiServiceTest extends TestCase
             ->once()
             ->with('Invalid input for quote generation', [
                 'title_empty' => false,
-                'author_empty' => true
+                'author_empty' => true,
             ]);
     }
 
@@ -68,7 +68,7 @@ class GeminiServiceTest extends TestCase
         Config::set('services.gemini.api_key', null);
         Log::spy();
 
-        $geminiService = new GeminiService();
+        $geminiService = new GeminiService;
         $result = $geminiService->generateQuote('The Great Gatsby', 'F. Scott Fitzgerald');
 
         $this->assertTrue($result['success']);
@@ -79,7 +79,7 @@ class GeminiServiceTest extends TestCase
             ->once()
             ->with('Using fallback quotes due to missing API configuration', [
                 'book' => 'The Great Gatsby',
-                'author' => 'F. Scott Fitzgerald'
+                'author' => 'F. Scott Fitzgerald',
             ]);
     }
 
@@ -88,7 +88,7 @@ class GeminiServiceTest extends TestCase
         Config::set('services.gemini.api_key', 'your-gemini-api-key-here');
         Log::spy();
 
-        $geminiService = new GeminiService();
+        $geminiService = new GeminiService;
         $result = $geminiService->generateQuote('Test Book', 'Test Author');
 
         $this->assertTrue($result['success']);
@@ -98,7 +98,7 @@ class GeminiServiceTest extends TestCase
             ->once()
             ->with('Using fallback quotes due to missing API configuration', [
                 'book' => 'Test Book',
-                'author' => 'Test Author'
+                'author' => 'Test Author',
             ]);
     }
 
@@ -111,13 +111,13 @@ class GeminiServiceTest extends TestCase
                         'content' => [
                             'parts' => [
                                 [
-                                    'text' => 'Generated quote from API'
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ], 200)
+                                    'text' => 'Generated quote from API',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
         ]);
 
         Log::spy();
@@ -139,8 +139,8 @@ class GeminiServiceTest extends TestCase
         Log::shouldHaveReceived('debug')
             ->atLeast()->once()
             ->with('Making Gemini API request', \Mockery::on(function ($args) {
-                return $args['book'] === 'Test Book' && 
-                       $args['author'] === 'Test Author' && 
+                return $args['book'] === 'Test Book' &&
+                       $args['author'] === 'Test Author' &&
                        is_int($args['prompt_length']);
             }));
     }
@@ -154,13 +154,13 @@ class GeminiServiceTest extends TestCase
                         'content' => [
                             'parts' => [
                                 [
-                                    'text' => ''
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ], 200)
+                                    'text' => '',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
         ]);
 
         Log::spy();
@@ -176,7 +176,7 @@ class GeminiServiceTest extends TestCase
             ->once()
             ->with('Empty quote received from Gemini API', [
                 'book' => 'Test Book',
-                'author' => 'Test Author'
+                'author' => 'Test Author',
             ]);
     }
 
@@ -185,9 +185,9 @@ class GeminiServiceTest extends TestCase
         Http::fake([
             '*' => Http::response([
                 'error' => [
-                    'message' => 'API quota exceeded'
-                ]
-            ], 429)
+                    'message' => 'API quota exceeded',
+                ],
+            ], 429),
         ]);
 
         Log::spy();
@@ -209,10 +209,10 @@ class GeminiServiceTest extends TestCase
             '*' => Http::response([
                 'candidates' => [
                     [
-                        'finishReason' => 'SAFETY'
-                    ]
-                ]
-            ], 200)
+                        'finishReason' => 'SAFETY',
+                    ],
+                ],
+            ], 200),
         ]);
 
         Log::spy();
@@ -228,7 +228,7 @@ class GeminiServiceTest extends TestCase
             ->with('Gemini API content filtered', [
                 'book' => 'Controversial Book',
                 'author' => 'Controversial Author',
-                'finish_reason' => 'SAFETY'
+                'finish_reason' => 'SAFETY',
             ]);
     }
 
@@ -252,7 +252,7 @@ class GeminiServiceTest extends TestCase
                 'message' => 'Connection failed',
                 'book' => 'Test Book',
                 'author' => 'Test Author',
-                'type' => 'connection_error'
+                'type' => 'connection_error',
             ]);
     }
 
@@ -260,7 +260,7 @@ class GeminiServiceTest extends TestCase
     {
         // Mock Http to return a failing response
         Http::fake([
-            '*' => Http::response(['error' => 'Bad request'], 400)
+            '*' => Http::response(['error' => 'Bad request'], 400),
         ]);
 
         Log::spy();
@@ -281,10 +281,10 @@ class GeminiServiceTest extends TestCase
     {
         // This test verifies that the service gracefully handles unexpected exceptions
         // and falls back to mock quotes to ensure functionality is maintained
-        
+
         // Create a service with invalid config (no API key configured)
-        $invalidService = new GeminiService();
-        
+        $invalidService = new GeminiService;
+
         $result = $invalidService->generateQuote('Test Book', 'Test Author');
 
         // Should fall back to mock quote gracefully
@@ -297,12 +297,12 @@ class GeminiServiceTest extends TestCase
     {
         $specificBooks = [
             'The Great Gatsby' => 'So we beat on',
-            '1984' => 'Freedom is the freedom to say'
+            '1984' => 'Freedom is the freedom to say',
         ];
 
         foreach ($specificBooks as $title => $expectedContent) {
             $result = $this->invokeMethod($this->geminiService, 'getFallbackQuote', [$title, 'Author']);
-            
+
             $this->assertTrue($result['success']);
             $this->assertStringContainsString($expectedContent, $result['quote']);
         }
@@ -311,7 +311,7 @@ class GeminiServiceTest extends TestCase
     public function test_get_fallback_quote_returns_default_for_unknown_book(): void
     {
         $result = $this->invokeMethod($this->geminiService, 'getFallbackQuote', ['Unknown Book', 'Unknown Author']);
-        
+
         $this->assertTrue($result['success']);
         $this->assertStringContainsString('Unknown Book', $result['quote']);
         $this->assertStringContainsString('Unknown Author', $result['quote']);
@@ -323,7 +323,7 @@ class GeminiServiceTest extends TestCase
         $prompt = $this->invokeMethod($this->geminiService, 'buildQuotePrompt', [
             'Test Title',
             'Test Author',
-            'Test description'
+            'Test description',
         ]);
 
         $this->assertStringContainsString('Test Title', $prompt);
@@ -337,7 +337,7 @@ class GeminiServiceTest extends TestCase
         $prompt = $this->invokeMethod($this->geminiService, 'buildQuotePrompt', [
             'Test Title',
             'Test Author',
-            ''
+            '',
         ]);
 
         $this->assertStringContainsString('Test Title', $prompt);
@@ -366,8 +366,8 @@ class GeminiServiceTest extends TestCase
     public function test_get_book_info_uses_fallback_when_disabled(): void
     {
         Config::set('services.gemini.enabled', false);
-        
-        $geminiService = new GeminiService();
+
+        $geminiService = new GeminiService;
         $result = $geminiService->getBookInfo('great');
 
         $this->assertTrue($result['success']);
@@ -384,13 +384,13 @@ class GeminiServiceTest extends TestCase
                         'content' => [
                             'parts' => [
                                 [
-                                    'text' => '{"suggestions": [{"title": "Great Expectations", "author": "Charles Dickens", "publication_year": 1861, "genre": "Classic Literature", "description": "A story about Pip."}]}'
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ], 200)
+                                    'text' => '{"suggestions": [{"title": "Great Expectations", "author": "Charles Dickens", "publication_year": 1861, "genre": "Classic Literature", "description": "A story about Pip."}]}',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
         ]);
 
         Log::spy();
@@ -416,13 +416,13 @@ class GeminiServiceTest extends TestCase
                         'content' => [
                             'parts' => [
                                 [
-                                    'text' => 'invalid json response'
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ], 200)
+                                    'text' => 'invalid json response',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
         ]);
 
         Log::spy();
@@ -440,7 +440,7 @@ class GeminiServiceTest extends TestCase
     public function test_get_book_info_handles_api_error(): void
     {
         Http::fake([
-            '*' => Http::response(['error' => 'API error'], 500)
+            '*' => Http::response(['error' => 'API error'], 500),
         ]);
 
         Log::spy();

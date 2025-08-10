@@ -35,8 +35,8 @@ class Book extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'user_books')
-                    ->withPivot('read_at')
-                    ->withTimestamps();
+            ->withPivot('read_at')
+            ->withTimestamps();
     }
 
     public function displayName(): Attribute
@@ -88,18 +88,18 @@ class Book extends Model
     public function scopeWithValidData(Builder $query): Builder
     {
         return $query->whereNotNull('title')
-                     ->whereNotNull('author')
-                     ->where('title', '!=', '')
-                     ->where('author', '!=', '');
+            ->whereNotNull('author')
+            ->where('title', '!=', '')
+            ->where('author', '!=', '');
     }
 
     public function scopeSearch(Builder $query, string $search): Builder
     {
         return $query->where(function ($q) use ($search) {
             $q->where('title', 'like', "%{$search}%")
-              ->orWhere('author', 'like', "%{$search}%")
-              ->orWhere('description', 'like', "%{$search}%")
-              ->orWhere('genre', 'like', "%{$search}%");
+                ->orWhere('author', 'like', "%{$search}%")
+                ->orWhere('description', 'like', "%{$search}%")
+                ->orWhere('genre', 'like', "%{$search}%");
         });
     }
 
@@ -111,7 +111,7 @@ class Book extends Model
     public function toArray(): array
     {
         $array = parent::toArray();
-        
+
         // Remove sensitive or unnecessary data from API responses if needed
         return $array;
     }

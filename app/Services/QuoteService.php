@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\User;
 use App\Models\Book;
-use Illuminate\Support\Facades\Log;
+use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class QuoteService
 {
@@ -13,20 +13,20 @@ class QuoteService
         protected GeminiService $geminiService
     ) {}
 
-    public function generateDailyQuotesForUser(User $user, int $maxBooks = null): array
+    public function generateDailyQuotesForUser(User $user, ?int $maxBooks = null): array
     {
         try {
             $userBooks = $user->books()
                 ->whereNotNull('title')
                 ->whereNotNull('author')
                 ->get();
-            
+
             if ($userBooks->isEmpty()) {
                 return [
                     'success' => false,
                     'message' => 'User has no books in their reading list.',
                     'quotes' => [],
-                    'user' => $user
+                    'user' => $user,
                 ];
             }
 
@@ -41,19 +41,19 @@ class QuoteService
                     $quotes[] = [
                         'book' => $book,
                         'quote_content' => $quoteResult['quote'],
-                        'generated_at' => now()
+                        'generated_at' => now(),
                     ];
                 } else {
                     $failedBooks[] = [
                         'book' => $book,
-                        'error' => $quoteResult['error'] ?? 'Unknown error'
+                        'error' => $quoteResult['error'] ?? 'Unknown error',
                     ];
-                    
+
                     Log::warning('Failed to generate quote for daily digest', [
                         'user_id' => $user->id,
                         'book_id' => $book->id,
                         'book_title' => $book->title,
-                        'error' => $quoteResult['error'] ?? 'Unknown error'
+                        'error' => $quoteResult['error'] ?? 'Unknown error',
                     ]);
                 }
             }
@@ -62,92 +62,92 @@ class QuoteService
                 'user_id' => $user->id,
                 'books_selected' => $selectedBooks->count(),
                 'quotes_generated' => count($quotes),
-                'failed_books' => count($failedBooks)
+                'failed_books' => count($failedBooks),
             ]);
 
             return [
-                'success' => !empty($quotes),
+                'success' => ! empty($quotes),
                 'quotes' => $quotes,
                 'failed_books' => $failedBooks,
                 'user' => $user,
-                'message' => $this->buildResultMessage(count($quotes), count($failedBooks))
+                'message' => $this->buildResultMessage(count($quotes), count($failedBooks)),
             ];
-            
+
         } catch (\Exception $e) {
             Log::error('Daily quotes generation failed', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return [
                 'success' => false,
                 'message' => 'Failed to generate daily quotes due to system error.',
                 'quotes' => [],
                 'user' => $user,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
 
-    protected function selectRandomBooks(Collection $books, int $maxBooks = null): Collection
+    protected function selectRandomBooks(Collection $books, ?int $maxBooks = null): Collection
     {
         if ($books->isEmpty()) {
             return collect([]);
         }
-        
+
         // If no maxBooks specified, return all books
         if ($maxBooks === null) {
             return $books;
         }
-        
+
         $count = min($maxBooks, max(1, $books->count()));
-        
+
         if ($books->count() <= $count) {
             return $books;
         }
-        
+
         return $books->random($count);
     }
 
     public function generateQuoteForSpecificBook(Book $book): array
     {
-        if (!$book || empty($book->title) || empty($book->author)) {
+        if (! $book || empty($book->title) || empty($book->author)) {
             return [
                 'success' => false,
                 'error' => 'Invalid book data: title and author are required.',
-                'quote' => null
+                'quote' => null,
             ];
         }
-        
+
         try {
             $result = $this->geminiService->generateQuote(
                 $book->title,
                 $book->author,
                 $book->description ?? ''
             );
-            
+
             if ($result['success']) {
                 Log::debug('Quote generated successfully', [
                     'book_id' => $book->id,
                     'book_title' => $book->title,
-                    'quote_length' => strlen($result['quote'] ?? '')
+                    'quote_length' => strlen($result['quote'] ?? ''),
                 ]);
             }
-            
+
             return $result;
-            
+
         } catch (\Exception $e) {
             Log::error('Quote generation failed for specific book', [
                 'book_id' => $book->id,
                 'book_title' => $book->title,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
-            
+
             return [
                 'success' => false,
                 'error' => 'Failed to generate quote due to system error.',
-                'quote' => null
+                'quote' => null,
             ];
         }
     }
@@ -157,23 +157,23 @@ class QuoteService
         if ($successCount === 0 && $failureCount === 0) {
             return 'No books were processed.';
         }
-        
+
         if ($successCount > 0 && $failureCount === 0) {
             return "Successfully generated {$successCount} quote(s).";
         }
-        
+
         if ($successCount === 0 && $failureCount > 0) {
             return "Failed to generate quotes for all {$failureCount} selected book(s).";
         }
-        
+
         return "Generated {$successCount} quote(s) successfully, failed for {$failureCount} book(s).";
     }
 
     public function validateBook(Book $book): bool
     {
-        return !empty($book->title) && 
-               !empty($book->author) && 
-               strlen($book->title) <= 255 && 
+        return ! empty($book->title) &&
+               ! empty($book->author) &&
+               strlen($book->title) <= 255 &&
                strlen($book->author) <= 255;
     }
 }

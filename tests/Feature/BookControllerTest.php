@@ -15,12 +15,13 @@ class BookControllerTest extends TestCase
     use RefreshDatabase;
 
     protected User $user;
+
     protected User $otherUser;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->user = User::factory()->create();
         $this->otherUser = User::factory()->create();
     }
@@ -29,7 +30,7 @@ class BookControllerTest extends TestCase
     {
         $userBook = Book::factory()->create(['title' => 'User Book']);
         $otherBook = Book::factory()->create(['title' => 'Other Book']);
-        
+
         $this->user->addBook($userBook);
         $this->otherUser->addBook($otherBook);
 
@@ -43,14 +44,14 @@ class BookControllerTest extends TestCase
     public function test_index_requires_authentication(): void
     {
         $response = $this->get('/books');
-        
+
         $response->assertRedirect('/login');
     }
 
     public function test_create_shows_form(): void
     {
         $response = $this->actingAs($this->user)->get('/books/create');
-        
+
         $response->assertStatus(200);
         $response->assertSee('title');
         $response->assertSee('author');
@@ -59,7 +60,7 @@ class BookControllerTest extends TestCase
     public function test_create_requires_authentication(): void
     {
         $response = $this->get('/books/create');
-        
+
         $response->assertRedirect('/login');
     }
 
@@ -218,12 +219,12 @@ class BookControllerTest extends TestCase
         $mockQuoteService = Mockery::mock(QuoteService::class);
         $mockQuoteService->shouldReceive('generateQuoteForSpecificBook')
             ->once()
-            ->with(Mockery::on(function($arg) use ($book) {
+            ->with(Mockery::on(function ($arg) use ($book) {
                 return $arg instanceof Book && $arg->id === $book->id;
             }))
             ->andReturn([
                 'success' => true,
-                'quote' => 'Test quote content'
+                'quote' => 'Test quote content',
             ]);
 
         // Mock GeminiService as well since BookController now depends on it
@@ -238,7 +239,7 @@ class BookControllerTest extends TestCase
         $response->assertStatus(200);
         $response->assertJson([
             'success' => true,
-            'quote' => 'Test quote content'
+            'quote' => 'Test quote content',
         ]);
     }
 
@@ -252,7 +253,7 @@ class BookControllerTest extends TestCase
         $response->assertStatus(403);
         $response->assertJson([
             'success' => false,
-            'error' => 'You can only generate quotes for books in your reading list.'
+            'error' => 'You can only generate quotes for books in your reading list.',
         ]);
     }
 
@@ -264,12 +265,12 @@ class BookControllerTest extends TestCase
         $mockQuoteService = Mockery::mock(QuoteService::class);
         $mockQuoteService->shouldReceive('generateQuoteForSpecificBook')
             ->once()
-            ->with(Mockery::on(function($arg) use ($book) {
+            ->with(Mockery::on(function ($arg) use ($book) {
                 return $arg instanceof Book && $arg->id === $book->id;
             }))
             ->andReturn([
                 'success' => false,
-                'error' => 'API error'
+                'error' => 'API error',
             ]);
 
         // Mock GeminiService as well since BookController now depends on it
@@ -284,7 +285,7 @@ class BookControllerTest extends TestCase
         $response->assertStatus(500);
         $response->assertJson([
             'success' => false,
-            'error' => 'API error'
+            'error' => 'API error',
         ]);
     }
 

@@ -38,18 +38,19 @@ class SendDailyDigest extends Command
     public function handle()
     {
         $userId = $this->option('user-id');
-        
+
         if ($userId) {
             $user = User::find($userId);
-            if (!$user) {
+            if (! $user) {
                 $this->error("User with ID {$userId} not found.");
+
                 return 1;
             }
             $users = collect([$user]);
             $this->info("Sending digest to user: {$user->name}");
         } else {
             $users = User::whereHas('books')->get();
-            $this->info("Sending digest to " . $users->count() . " users with books.");
+            $this->info('Sending digest to '.$users->count().' users with books.');
         }
 
         $successCount = 0;
@@ -58,7 +59,7 @@ class SendDailyDigest extends Command
         foreach ($users as $user) {
             try {
                 $result = $this->quoteService->generateDailyQuotesForUser($user);
-                
+
                 if ($result['success']) {
                     Mail::to($user->email)->send(new DailyBookDigest($user, $result['quotes']));
                     $successCount++;
@@ -70,7 +71,7 @@ class SendDailyDigest extends Command
                 }
             } catch (\Exception $e) {
                 $errorCount++;
-                $this->error("✗ Error sending to {$user->name}: " . $e->getMessage());
+                $this->error("✗ Error sending to {$user->name}: ".$e->getMessage());
             }
         }
 
@@ -79,8 +80,9 @@ class SendDailyDigest extends Command
         if ($errorCount > 0) {
             $this->warn("✗ Errors: {$errorCount}");
         }
-        
+
         $this->info('Daily digest sending completed!');
+
         return 0;
     }
 }

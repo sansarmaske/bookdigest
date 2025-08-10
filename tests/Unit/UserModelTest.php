@@ -15,7 +15,7 @@ class UserModelTest extends TestCase
     {
         $user = User::factory()->create();
         $book = Book::factory()->create();
-        
+
         $user->addBook($book);
 
         $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class, $user->books());
@@ -25,28 +25,28 @@ class UserModelTest extends TestCase
     public function test_books_relationship_orders_by_created_at_desc(): void
     {
         $user = User::factory()->create();
-        
+
         $firstBook = Book::factory()->create(['title' => 'First Book']);
         $secondBook = Book::factory()->create(['title' => 'Second Book']);
         $thirdBook = Book::factory()->create(['title' => 'Third Book']);
-        
+
         // Add books with specific timestamps
         $user->books()->attach($firstBook, [
             'read_at' => now(),
             'created_at' => now()->subDays(3),
-            'updated_at' => now()->subDays(3)
+            'updated_at' => now()->subDays(3),
         ]);
-        
+
         $user->books()->attach($secondBook, [
             'read_at' => now(),
             'created_at' => now()->subDays(1),
-            'updated_at' => now()->subDays(1)
+            'updated_at' => now()->subDays(1),
         ]);
-        
+
         $user->books()->attach($thirdBook, [
             'read_at' => now(),
             'created_at' => now()->subDays(2),
-            'updated_at' => now()->subDays(2)
+            'updated_at' => now()->subDays(2),
         ]);
 
         $books = $user->books()->get();
@@ -61,7 +61,7 @@ class UserModelTest extends TestCase
     {
         $user = User::factory()->create();
         $book = Book::factory()->create();
-        
+
         $user->addBook($book);
 
         $this->assertTrue($user->hasBook($book));
@@ -79,13 +79,13 @@ class UserModelTest extends TestCase
     {
         $user = User::factory()->create();
         $book = Book::factory()->create();
-        
+
         $this->assertFalse($user->hasBook($book));
-        
+
         $user->addBook($book);
-        
+
         $this->assertTrue($user->hasBook($book));
-        
+
         // Check pivot data
         $pivotData = $user->books()->where('book_id', $book->id)->first()->pivot;
         $this->assertNotNull($pivotData->read_at);
@@ -98,9 +98,9 @@ class UserModelTest extends TestCase
         $user = User::factory()->create();
         $book = Book::factory()->create();
         $customReadAt = now()->subWeek();
-        
+
         $user->addBook($book, $customReadAt);
-        
+
         $pivotData = $user->books()->where('book_id', $book->id)->first()->pivot;
         $this->assertEquals($customReadAt->format('Y-m-d H:i:s'), $pivotData->read_at);
     }
@@ -109,10 +109,10 @@ class UserModelTest extends TestCase
     {
         $user = User::factory()->create();
         $book = Book::factory()->create();
-        
+
         $user->addBook($book);
         $user->addBook($book); // Try to add again
-        
+
         $this->assertEquals(1, $user->books()->count());
     }
 
@@ -120,12 +120,12 @@ class UserModelTest extends TestCase
     {
         $user = User::factory()->create();
         $book = Book::factory()->create();
-        
+
         $user->addBook($book);
         $this->assertTrue($user->hasBook($book));
-        
+
         $result = $user->removeBook($book);
-        
+
         $this->assertTrue($result);
         $this->assertFalse($user->hasBook($book));
     }
@@ -134,63 +134,63 @@ class UserModelTest extends TestCase
     {
         $user = User::factory()->create();
         $book = Book::factory()->create();
-        
+
         $result = $user->removeBook($book);
-        
+
         $this->assertFalse($result);
     }
 
     public function test_get_book_count_returns_correct_count(): void
     {
         $user = User::factory()->create();
-        
+
         $this->assertEquals(0, $user->getBookCount());
-        
+
         $books = Book::factory()->count(3)->create();
         foreach ($books as $book) {
             $user->addBook($book);
         }
-        
+
         $this->assertEquals(3, $user->getBookCount());
-        
+
         $user->removeBook($books->first());
-        
+
         $this->assertEquals(2, $user->getBookCount());
     }
 
     public function test_fillable_attributes(): void
     {
-        $user = new User();
-        
+        $user = new User;
+
         $expected = ['name', 'email', 'password'];
-        
+
         $this->assertEquals($expected, $user->getFillable());
     }
 
     public function test_hidden_attributes(): void
     {
-        $user = new User();
-        
+        $user = new User;
+
         $expected = ['password', 'remember_token'];
-        
+
         $this->assertEquals($expected, $user->getHidden());
     }
 
     public function test_casts_attributes(): void
     {
         $user = User::factory()->create([
-            'email_verified_at' => now()
+            'email_verified_at' => now(),
         ]);
-        
+
         $this->assertInstanceOf(\Carbon\Carbon::class, $user->email_verified_at);
     }
 
     public function test_password_is_hashed(): void
     {
         $user = User::factory()->create([
-            'password' => 'plaintext-password'
+            'password' => 'plaintext-password',
         ]);
-        
+
         $this->assertNotEquals('plaintext-password', $user->password);
         $this->assertTrue(\Hash::check('plaintext-password', $user->password));
     }
@@ -198,7 +198,7 @@ class UserModelTest extends TestCase
     public function test_user_factory_creates_valid_user(): void
     {
         $user = User::factory()->create();
-        
+
         $this->assertNotEmpty($user->name);
         $this->assertNotEmpty($user->email);
         $this->assertNotEmpty($user->password);
@@ -210,11 +210,11 @@ class UserModelTest extends TestCase
     {
         $user = User::factory()->create([
             'password' => 'secret-password',
-            'remember_token' => 'secret-token'
+            'remember_token' => 'secret-token',
         ]);
-        
+
         $array = $user->toArray();
-        
+
         $this->assertArrayNotHasKey('password', $array);
         $this->assertArrayNotHasKey('remember_token', $array);
         $this->assertArrayHasKey('name', $array);
@@ -226,10 +226,10 @@ class UserModelTest extends TestCase
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
         $book = Book::factory()->create();
-        
+
         $user1->addBook($book);
         $user2->addBook($book);
-        
+
         $this->assertTrue($user1->hasBook($book));
         $this->assertTrue($user2->hasBook($book));
         $this->assertEquals(2, $book->users()->count());
@@ -240,12 +240,12 @@ class UserModelTest extends TestCase
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
         $book = Book::factory()->create();
-        
+
         $user1->addBook($book);
         $user2->addBook($book);
-        
+
         $user1->removeBook($book);
-        
+
         $this->assertFalse($user1->hasBook($book));
         $this->assertTrue($user2->hasBook($book));
         $this->assertEquals(1, $book->users()->count());
@@ -256,9 +256,9 @@ class UserModelTest extends TestCase
         $user = User::factory()->create();
         $book = Book::factory()->create();
         $readAt = now()->subMonth();
-        
+
         $user->addBook($book, $readAt);
-        
+
         $userBook = $user->books()->first();
         $this->assertEquals($readAt->format('Y-m-d H:i:s'), $userBook->pivot->read_at);
     }

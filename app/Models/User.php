@@ -49,9 +49,9 @@ class User extends Authenticatable
     public function books()
     {
         return $this->belongsToMany(Book::class, 'user_books')
-                    ->withPivot('read_at')
-                    ->withTimestamps()
-                    ->orderByPivot('created_at', 'desc');
+            ->withPivot('read_at')
+            ->withTimestamps()
+            ->orderByPivot('created_at', 'desc');
     }
 
     public function hasBook(Book $book): bool
@@ -61,11 +61,11 @@ class User extends Authenticatable
 
     public function addBook(Book $book, ?\DateTimeInterface $readAt = null): void
     {
-        if (!$this->hasBook($book)) {
+        if (! $this->hasBook($book)) {
             $this->books()->attach($book, [
                 'read_at' => $readAt ?? now(),
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ]);
         }
     }

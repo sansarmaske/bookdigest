@@ -14,6 +14,7 @@ Route::get('/', function () {
     if (auth()->check()) {
         return redirect()->route('books.index');
     }
+
     return view('welcome');
 });
 
@@ -25,12 +26,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
+
     Route::resource('books', BookController::class)->except(['show', 'edit', 'update']);
-    
+
     // Book autocomplete endpoint
     Route::get('/api/books/autocomplete', [BookController::class, 'autocomplete'])->name('books.autocomplete');
-    
+
     // Rate-limited quote generation - 10 requests per minute per user
     Route::middleware('throttle:quotes')->group(function () {
         Route::post('/books/{book}/quote', [BookController::class, 'generateQuote'])->name('books.generate-quote');

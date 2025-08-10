@@ -27,8 +27,8 @@ class BookAutocompleteRequest extends FormRequest
                 'string',
                 'min:3',
                 'max:255',
-                'regex:/^[\p{L}\p{N}\s\-\.\,\!\?\:\;]+$/u' // Allow letters, numbers, spaces, and common punctuation
-            ]
+                'regex:/^[\p{L}\p{N}\s\-\.\,\!\?\:\;]+$/u', // Allow letters, numbers, spaces, and common punctuation
+            ],
         ];
     }
 
@@ -42,7 +42,7 @@ class BookAutocompleteRequest extends FormRequest
             'title.string' => 'Book title must be a string.',
             'title.min' => 'Book title must be at least 3 characters long.',
             'title.max' => 'Book title must not exceed 255 characters.',
-            'title.regex' => 'Book title contains invalid characters.'
+            'title.regex' => 'Book title contains invalid characters.',
         ];
     }
 
@@ -52,7 +52,7 @@ class BookAutocompleteRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'title' => 'book title'
+            'title' => 'book title',
         ];
     }
 }
