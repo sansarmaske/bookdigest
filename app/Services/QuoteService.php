@@ -224,8 +224,8 @@ class QuoteService
             }
 
             // 3. Quote to Ponder - different random book
-            $ponderBook = $books->count() > 1 ? 
-                $books->except($snippetBook->id)->random() : 
+            $ponderBook = $books->count() > 1 ?
+                $books->except($snippetBook->id)->random() :
                 $snippetBook;
 
             $ponderResult = $this->geminiService->generateQuoteToPonder(

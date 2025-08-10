@@ -512,6 +512,7 @@ Only include well-known, published books. Provide accurate information only.";
 
         try {
             $prompt = $this->buildSnippetPrompt($bookTitle, $author, $description);
+
             return $this->makeGeminiRequest($prompt, 'snippet');
         } catch (\Exception $e) {
             Log::error('Today\'s snippet generation failed', [
@@ -539,6 +540,7 @@ Only include well-known, published books. Provide accurate information only.";
 
         try {
             $prompt = $this->buildConnectionPrompt($books);
+
             return $this->makeGeminiRequest($prompt, 'connection');
         } catch (\Exception $e) {
             Log::error('Cross-book connection generation failed', [
@@ -565,6 +567,7 @@ Only include well-known, published books. Provide accurate information only.";
 
         try {
             $prompt = $this->buildQuoteToPonderPrompt($bookTitle, $author, $description);
+
             return $this->makeGeminiRequest($prompt, 'quote_to_ponder');
         } catch (\Exception $e) {
             Log::error('Quote to ponder generation failed', [
@@ -592,6 +595,7 @@ Only include well-known, published books. Provide accurate information only.";
 
         try {
             $prompt = $this->buildReflectionPrompt($books);
+
             return $this->makeGeminiRequest($prompt, 'reflection');
         } catch (\Exception $e) {
             Log::error('Today\'s reflection generation failed', [
@@ -609,14 +613,14 @@ Only include well-known, published books. Provide accurate information only.";
     protected function buildSnippetPrompt(string $bookTitle, string $author, ?string $description = ''): string
     {
         $randomSeed = mt_rand(1, 1000000);
-        
+
         $prompt = "Random seed: {$randomSeed}\n\n";
         $prompt .= "Generate a compelling paragraph-long excerpt from '{$bookTitle}' by {$author}. ";
-        
-        if (!empty($description)) {
+
+        if (! empty($description)) {
             $prompt .= "Book context: {$description}. ";
         }
-        
+
         $prompt .= "Requirements:\n";
         $prompt .= "- Choose a different, random section each time to avoid repetition\n";
         $prompt .= "- Make it substantial (100-200 words) to give readers a real taste of the book\n";
@@ -646,7 +650,7 @@ Only include well-known, published books. Provide accurate information only.";
         $prompt .= "- Keep it concise but substantive (2-3 sentences)\n";
         $prompt .= "- Focus on how the books complement or contrast with each other\n";
         $prompt .= "- Provide only the connection insight, no introductory text\n";
-        
+
         return $prompt;
     }
 
@@ -656,21 +660,21 @@ Only include well-known, published books. Provide accurate information only.";
     protected function buildQuoteToPonderPrompt(string $bookTitle, string $author, ?string $description = ''): string
     {
         $randomSeed = mt_rand(1, 1000000);
-        
+
         $prompt = "Random seed: {$randomSeed}\n\n";
         $prompt .= "Select a profound, thought-provoking quote from '{$bookTitle}' by {$author}. ";
-        
-        if (!empty($description)) {
+
+        if (! empty($description)) {
             $prompt .= "Book context: {$description}. ";
         }
-        
+
         $prompt .= "Requirements:\n";
         $prompt .= "- Choose a different quote each time to ensure variety\n";
         $prompt .= "- Select quotes that are philosophically rich or emotionally resonant\n";
         $prompt .= "- Focus on quotes that make readers pause and think\n";
         $prompt .= "- Provide ONLY the quote text, no context or explanation\n";
         $prompt .= "- Ensure the quote is authentic to the book and author's voice\n";
-        
+
         return $prompt;
     }
 
@@ -693,7 +697,7 @@ Only include well-known, published books. Provide accurate information only.";
         $prompt .= "- Keep it concise but meaningful (1-2 sentences)\n";
         $prompt .= "- Focus on personal growth, wisdom, or practical application\n";
         $prompt .= "- Provide only the reflection content, no introductory text\n";
-        
+
         return $prompt;
     }
 
@@ -706,7 +710,7 @@ Only include well-known, published books. Provide accurate information only.";
             ->withHeaders(['Content-Type' => 'application/json'])
             ->post("{$this->baseUrl}/models/{$this->model}:generateContent?key={$this->apiKey}", [
                 'contents' => [
-                    ['parts' => [['text' => $prompt]]]
+                    ['parts' => [['text' => $prompt]]],
                 ],
                 'generationConfig' => [
                     'temperature' => $this->temperature,
@@ -720,11 +724,11 @@ Only include well-known, published books. Provide accurate information only.";
 
         if ($response->successful()) {
             $data = $response->json();
-            
+
             if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
                 $content = trim($data['candidates'][0]['content']['parts'][0]['text']);
-                
-                if (!empty($content)) {
+
+                if (! empty($content)) {
                     return [
                         'success' => true,
                         'content' => $content,
@@ -761,7 +765,7 @@ Only include well-known, published books. Provide accurate information only.";
     {
         $book1 = $books[0]['title'] ?? 'Unknown';
         $book2 = $books[1]['title'] ?? 'Unknown';
-        
+
         $connection = "Both \"{$book1}\" and \"{$book2}\" explore the fundamental human experience of growth through challenge. While their contexts differ, both works remind us that transformation often comes through facing what initially seems impossible.";
 
         return [
