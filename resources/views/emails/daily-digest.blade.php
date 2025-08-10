@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Daily Book Quotes</title>
+    <title>Your Daily Book Digest</title>
     <style>
         body {
             font-family: Georgia, serif;
@@ -91,7 +91,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📚 Your Daily Book Quotes</h1>
+            <h1>📚 Your Daily Book Digest</h1>
             <div class="date">{{ $date }}</div>
         </div>
 
