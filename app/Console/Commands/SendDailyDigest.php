@@ -61,7 +61,7 @@ class SendDailyDigest extends Command
                 $result = $this->quoteService->generateDailyQuotesForUser($user);
 
                 if ($result['success']) {
-                    Mail::to($user->email)->send(new DailyBookDigest($user, $result['quotes']));
+                    Mail::to($user->email)->send(new DailyBookDigest($user, $result['quotes'], $result['digestSections'] ?? []));
                     $successCount++;
                     $this->line("✓ Sent digest to {$user->name} ({$user->email})");
                 } else {

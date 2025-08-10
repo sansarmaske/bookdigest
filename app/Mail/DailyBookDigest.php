@@ -18,13 +18,16 @@ class DailyBookDigest extends Mailable // implements ShouldQueue - disabled for 
 
     public $quotes;
 
+    public $digestSections;
+
     /**
      * Create a new message instance.
      */
-    public function __construct(User $user, array $quotes)
+    public function __construct(User $user, array $quotes, array $digestSections = [])
     {
         $this->user = $user;
         $this->quotes = $quotes;
+        $this->digestSections = $digestSections;
     }
 
     /**
@@ -48,6 +51,10 @@ class DailyBookDigest extends Mailable // implements ShouldQueue - disabled for 
                 'user' => $this->user,
                 'quotes' => $this->quotes,
                 'date' => now()->format('F j, Y'),
+                'todaysSnippet' => $this->digestSections['todaysSnippet'] ?? null,
+                'crossBookConnection' => $this->digestSections['crossBookConnection'] ?? null,
+                'quoteToPonder' => $this->digestSections['quoteToPonder'] ?? null,
+                'todaysReflection' => $this->digestSections['todaysReflection'] ?? null,
             ]
         );
     }

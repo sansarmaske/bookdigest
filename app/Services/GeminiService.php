@@ -496,4 +496,312 @@ Only include well-known, published books. Provide accurate information only.";
             'suggestions' => [],
         ];
     }
+
+    /**
+     * Generate a random snippet from a book for today's snippet section
+     */
+    public function generateTodaysSnippet(string $bookTitle, string $author, ?string $description = ''): array
+    {
+        if (empty($bookTitle) || empty($author)) {
+            return $this->createErrorResponse('Book title and author are required.');
+        }
+
+        if (! $this->isServiceEnabled()) {
+            return $this->getFallbackSnippet($bookTitle, $author);
+        }
+
+        try {
+            $prompt = $this->buildSnippetPrompt($bookTitle, $author, $description);
+            return $this->makeGeminiRequest($prompt, 'snippet');
+        } catch (\Exception $e) {
+            Log::error('Today\'s snippet generation failed', [
+                'book' => $bookTitle,
+                'author' => $author,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->getFallbackSnippet($bookTitle, $author);
+        }
+    }
+
+    /**
+     * Generate cross-book connections between multiple books
+     */
+    public function generateCrossBookConnection(array $books): array
+    {
+        if (count($books) < 2) {
+            return $this->createErrorResponse('At least 2 books are required for cross-book connections.');
+        }
+
+        if (! $this->isServiceEnabled()) {
+            return $this->getFallbackConnection($books);
+        }
+
+        try {
+            $prompt = $this->buildConnectionPrompt($books);
+            return $this->makeGeminiRequest($prompt, 'connection');
+        } catch (\Exception $e) {
+            Log::error('Cross-book connection generation failed', [
+                'books_count' => count($books),
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->getFallbackConnection($books);
+        }
+    }
+
+    /**
+     * Generate a thought-provoking quote for pondering
+     */
+    public function generateQuoteToPonder(string $bookTitle, string $author, ?string $description = ''): array
+    {
+        if (empty($bookTitle) || empty($author)) {
+            return $this->createErrorResponse('Book title and author are required.');
+        }
+
+        if (! $this->isServiceEnabled()) {
+            return $this->getFallbackQuoteToPonder($bookTitle, $author);
+        }
+
+        try {
+            $prompt = $this->buildQuoteToPonderPrompt($bookTitle, $author, $description);
+            return $this->makeGeminiRequest($prompt, 'quote_to_ponder');
+        } catch (\Exception $e) {
+            Log::error('Quote to ponder generation failed', [
+                'book' => $bookTitle,
+                'author' => $author,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->getFallbackQuoteToPonder($bookTitle, $author);
+        }
+    }
+
+    /**
+     * Generate today's reflection based on the user's books
+     */
+    public function generateTodaysReflection(array $books): array
+    {
+        if (empty($books)) {
+            return $this->createErrorResponse('At least one book is required for reflection.');
+        }
+
+        if (! $this->isServiceEnabled()) {
+            return $this->getFallbackReflection($books);
+        }
+
+        try {
+            $prompt = $this->buildReflectionPrompt($books);
+            return $this->makeGeminiRequest($prompt, 'reflection');
+        } catch (\Exception $e) {
+            Log::error('Today\'s reflection generation failed', [
+                'books_count' => count($books),
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->getFallbackReflection($books);
+        }
+    }
+
+    /**
+     * Build prompt for today's snippet
+     */
+    protected function buildSnippetPrompt(string $bookTitle, string $author, ?string $description = ''): string
+    {
+        $randomSeed = mt_rand(1, 1000000);
+        
+        $prompt = "Random seed: {$randomSeed}\n\n";
+        $prompt .= "Generate a compelling paragraph-long excerpt from '{$bookTitle}' by {$author}. ";
+        
+        if (!empty($description)) {
+            $prompt .= "Book context: {$description}. ";
+        }
+        
+        $prompt .= "Requirements:\n";
+        $prompt .= "- Choose a different, random section each time to avoid repetition\n";
+        $prompt .= "- Make it substantial (100-200 words) to give readers a real taste of the book\n";
+        $prompt .= "- Select passages that showcase the author's unique voice and style\n";
+        $prompt .= "- Focus on memorable, impactful moments from the book\n";
+        $prompt .= "- Provide ONLY the excerpt content, no introductory text\n\n";
+        $prompt .= "The excerpt should be engaging and representative of the book's essence.";
+
+        return $prompt;
+    }
+
+    /**
+     * Build prompt for cross-book connections
+     */
+    protected function buildConnectionPrompt(array $books): string
+    {
+        $booksList = '';
+        foreach ($books as $book) {
+            $booksList .= "- '{$book['title']}' by {$book['author']}\n";
+        }
+
+        $prompt = "Generate an insightful connection between these books from the user's reading list:\n";
+        $prompt .= $booksList;
+        $prompt .= "\nRequirements:\n";
+        $prompt .= "- Find a meaningful thematic, philosophical, or stylistic connection\n";
+        $prompt .= "- Make it thought-provoking and intellectually engaging\n";
+        $prompt .= "- Keep it concise but substantive (2-3 sentences)\n";
+        $prompt .= "- Focus on how the books complement or contrast with each other\n";
+        $prompt .= "- Provide only the connection insight, no introductory text\n";
+        
+        return $prompt;
+    }
+
+    /**
+     * Build prompt for quote to ponder
+     */
+    protected function buildQuoteToPonderPrompt(string $bookTitle, string $author, ?string $description = ''): string
+    {
+        $randomSeed = mt_rand(1, 1000000);
+        
+        $prompt = "Random seed: {$randomSeed}\n\n";
+        $prompt .= "Select a profound, thought-provoking quote from '{$bookTitle}' by {$author}. ";
+        
+        if (!empty($description)) {
+            $prompt .= "Book context: {$description}. ";
+        }
+        
+        $prompt .= "Requirements:\n";
+        $prompt .= "- Choose a different quote each time to ensure variety\n";
+        $prompt .= "- Select quotes that are philosophically rich or emotionally resonant\n";
+        $prompt .= "- Focus on quotes that make readers pause and think\n";
+        $prompt .= "- Provide ONLY the quote text, no context or explanation\n";
+        $prompt .= "- Ensure the quote is authentic to the book and author's voice\n";
+        
+        return $prompt;
+    }
+
+    /**
+     * Build prompt for today's reflection
+     */
+    protected function buildReflectionPrompt(array $books): string
+    {
+        $booksList = '';
+        foreach ($books as $book) {
+            $booksList .= "- '{$book['title']}' by {$book['author']}\n";
+        }
+
+        $prompt = "Based on these books from the user's reading list:\n";
+        $prompt .= $booksList;
+        $prompt .= "\nGenerate a thoughtful reflection question or insight for today. Requirements:\n";
+        $prompt .= "- Create a question or prompt that encourages deep thinking\n";
+        $prompt .= "- Draw from themes, ideas, or lessons found in these books\n";
+        $prompt .= "- Make it personally applicable and actionable\n";
+        $prompt .= "- Keep it concise but meaningful (1-2 sentences)\n";
+        $prompt .= "- Focus on personal growth, wisdom, or practical application\n";
+        $prompt .= "- Provide only the reflection content, no introductory text\n";
+        
+        return $prompt;
+    }
+
+    /**
+     * Make a Gemini API request for the new sections
+     */
+    protected function makeGeminiRequest(string $prompt, string $type): array
+    {
+        $response = Http::timeout($this->timeout)
+            ->withHeaders(['Content-Type' => 'application/json'])
+            ->post("{$this->baseUrl}/models/{$this->model}:generateContent?key={$this->apiKey}", [
+                'contents' => [
+                    ['parts' => [['text' => $prompt]]]
+                ],
+                'generationConfig' => [
+                    'temperature' => $this->temperature,
+                    'topK' => 40,
+                    'topP' => 0.95,
+                    'maxOutputTokens' => $this->maxOutputTokens,
+                    'stopSequences' => [],
+                ],
+                'safetySettings' => $this->getSafetySettings(),
+            ]);
+
+        if ($response->successful()) {
+            $data = $response->json();
+            
+            if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+                $content = trim($data['candidates'][0]['content']['parts'][0]['text']);
+                
+                if (!empty($content)) {
+                    return [
+                        'success' => true,
+                        'content' => $content,
+                        'source' => 'gemini_api',
+                    ];
+                }
+            }
+        }
+
+        throw new \Exception("Gemini API request failed for {$type}");
+    }
+
+    /**
+     * Fallback methods for when API is unavailable
+     */
+    protected function getFallbackSnippet(string $bookTitle, string $author): array
+    {
+        $fallbackSnippets = [
+            'The Great Gatsby' => 'In his blue gardens men and girls came and went like moths among the whisperings and the champagne and the stars. At high tide in the afternoon I watched his guests diving from the tower of his raft, or taking the sun on the hot sand of his beach while his two motor-boats slit the waters of the Sound, drawing aquaplanes over cataracts of foam.',
+            '1984' => 'It was a bright cold day in April, and the clocks were striking thirteen. Winston Smith, his chin nuzzled into his breast in an effort to escape the vile wind, slipped quickly through the glass doors of Victory Mansions, though not quickly enough to prevent a swirl of gritty dust from entering along with him.',
+            'default' => "From the pages of \"{$bookTitle}\" by {$author}, this passage captures the essence of the human experience, weaving together themes of growth, challenge, and discovery that resonate across time and culture.",
+        ];
+
+        $snippet = $fallbackSnippets[$bookTitle] ?? $fallbackSnippets['default'];
+
+        return [
+            'success' => true,
+            'content' => $snippet,
+            'source' => 'fallback',
+        ];
+    }
+
+    protected function getFallbackConnection(array $books): array
+    {
+        $book1 = $books[0]['title'] ?? 'Unknown';
+        $book2 = $books[1]['title'] ?? 'Unknown';
+        
+        $connection = "Both \"{$book1}\" and \"{$book2}\" explore the fundamental human experience of growth through challenge. While their contexts differ, both works remind us that transformation often comes through facing what initially seems impossible.";
+
+        return [
+            'success' => true,
+            'content' => $connection,
+            'source' => 'fallback',
+        ];
+    }
+
+    protected function getFallbackQuoteToPonder(string $bookTitle, string $author): array
+    {
+        $fallbackQuotes = [
+            'The Great Gatsby' => 'So we beat on, boats against the current, borne back ceaselessly into the past.',
+            '1984' => 'Freedom is the freedom to say that two plus two make four. If that is granted, all else follows.',
+            'default' => 'The only way to make sense out of change is to plunge into it, move with it, and join the dance.',
+        ];
+
+        $quote = $fallbackQuotes[$bookTitle] ?? $fallbackQuotes['default'];
+
+        return [
+            'success' => true,
+            'content' => $quote,
+            'source' => 'fallback',
+        ];
+    }
+
+    protected function getFallbackReflection(array $books): array
+    {
+        $reflections = [
+            'What small action can you take today that aligns with the wisdom you\'ve gained from your reading?',
+            'How might the challenges faced by characters in your books inform your approach to current obstacles?',
+            'Which insight from your recent reading deserves deeper contemplation and practical application?',
+        ];
+
+        $reflection = $reflections[array_rand($reflections)];
+
+        return [
+            'success' => true,
+            'content' => $reflection,
+            'source' => 'fallback',
+        ];
+    }
 }

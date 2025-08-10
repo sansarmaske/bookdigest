@@ -65,9 +65,13 @@ class QuoteService
                 'failed_books' => count($failedBooks),
             ]);
 
+            // Generate the 4 new sections for the digest
+            $digestSections = $this->generateDigestSections($selectedBooks, $user);
+
             return [
-                'success' => ! empty($quotes),
+                'success' => ! empty($quotes) || ! empty($digestSections),
                 'quotes' => $quotes,
+                'digestSections' => $digestSections,
                 'failed_books' => $failedBooks,
                 'user' => $user,
                 'message' => $this->buildResultMessage(count($quotes), count($failedBooks)),
@@ -175,5 +179,98 @@ class QuoteService
                ! empty($book->author) &&
                strlen($book->title) <= 255 &&
                strlen($book->author) <= 255;
+    }
+
+    /**
+     * Generate all 4 sections for the enhanced daily digest
+     */
+    protected function generateDigestSections(Collection $books, User $user): array
+    {
+        $sections = [];
+
+        try {
+            // 1. Today's Snippet - random book
+            $snippetBook = $books->random();
+            $snippetResult = $this->geminiService->generateTodaysSnippet(
+                $snippetBook->title,
+                $snippetBook->author,
+                $snippetBook->description ?? ''
+            );
+
+            if ($snippetResult['success']) {
+                $sections['todaysSnippet'] = [
+                    'book' => $snippetBook,
+                    'quote_content' => $snippetResult['content'],
+                ];
+            }
+
+            // 2. Cross-book Connection - use multiple books
+            if ($books->count() >= 2) {
+                $connectionBooks = $books->take(3)->map(function ($book) {
+                    return [
+                        'title' => $book->title,
+                        'author' => $book->author,
+                    ];
+                })->toArray();
+
+                $connectionResult = $this->geminiService->generateCrossBookConnection($connectionBooks);
+
+                if ($connectionResult['success']) {
+                    $sections['crossBookConnection'] = [
+                        'connection' => $connectionResult['content'],
+                        'books' => $books->take(3)->pluck('title')->implode(', '),
+                    ];
+                }
+            }
+
+            // 3. Quote to Ponder - different random book
+            $ponderBook = $books->count() > 1 ? 
+                $books->except($snippetBook->id)->random() : 
+                $snippetBook;
+
+            $ponderResult = $this->geminiService->generateQuoteToPonder(
+                $ponderBook->title,
+                $ponderBook->author,
+                $ponderBook->description ?? ''
+            );
+
+            if ($ponderResult['success']) {
+                $sections['quoteToPonder'] = [
+                    'book' => $ponderBook,
+                    'quote_content' => $ponderResult['content'],
+                ];
+            }
+
+            // 4. Today's Reflection - based on all books
+            $reflectionBooks = $books->map(function ($book) {
+                return [
+                    'title' => $book->title,
+                    'author' => $book->author,
+                ];
+            })->toArray();
+
+            $reflectionResult = $this->geminiService->generateTodaysReflection($reflectionBooks);
+
+            if ($reflectionResult['success']) {
+                $sections['todaysReflection'] = [
+                    'reflection' => $reflectionResult['content'],
+                ];
+            }
+
+            Log::info('Digest sections generated', [
+                'user_id' => $user->id,
+                'sections_count' => count($sections),
+                'sections' => array_keys($sections),
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to generate digest sections', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'books_count' => $books->count(),
+            ]);
+        }
+
+        return $sections;
     }
 }
