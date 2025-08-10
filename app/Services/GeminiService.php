@@ -189,19 +189,57 @@ class GeminiService
 
     protected function buildQuotePrompt(string $bookTitle, string $author, ?string $description = ''): string
     {
-        $prompt = "I have read this book. I am trying to digest the book .please find random passages from the book. The book is :'{$bookTitle}' by {$author}.";
-
+        // Generate random variety elements to ensure different responses
+        $passageTypes = [
+            'a thought-provoking philosophical passage',
+            'a pivotal character development moment', 
+            'a beautifully descriptive scene',
+            'an emotionally powerful dialogue',
+            'a passage that reveals the book\'s central theme',
+            'an intriguing plot turning point',
+            'a memorable character interaction',
+            'a passage with rich symbolism or metaphor',
+            'a moment of internal conflict or revelation',
+            'a striking opening or closing passage from a chapter'
+        ];
+        
+        $analysisAngles = [
+            'focus on the literary techniques used',
+            'examine the character psychology',
+            'explore the cultural or historical context',
+            'analyze the symbolism and deeper meaning',
+            'discuss the emotional impact',
+            'consider the philosophical implications',
+            'highlight the unique writing style',
+            'examine the social commentary',
+            'discuss how it connects to the overall narrative',
+            'analyze the use of language and imagery'
+        ];
+        
+        $randomPassageType = $passageTypes[array_rand($passageTypes)];
+        $randomAnalysisAngle = $analysisAngles[array_rand($analysisAngles)];
+        $randomSeed = mt_rand(1, 1000000);
+        
+        $prompt = "Random seed: {$randomSeed}\n\n";
+        $prompt .= "I need a book digest passage from '{$bookTitle}' by {$author}. ";
+        
         if (!empty($description)) {
-            $prompt .= " Book description: {$description}.";
+            $prompt .= "Book context: {$description}. ";
         }
-
-        $prompt .= " Please provide:\n";
-        $prompt .= "1. A meaningful  passage (1 paragraph)\n";
-        $prompt .= "\nFormat your response as:\n";
-        $prompt .= "\n Dont't say Okay, here's a random passage. Just print out passage";
-        $prompt .= " the passage here\n";
-
-
+        
+        $prompt .= "Please select {$randomPassageType} and {$randomAnalysisAngle}.\n\n";
+        
+        $prompt .= "IMPORTANT VARIETY REQUIREMENTS:\n";
+        $prompt .= "- Choose a DIFFERENT section of the book each time\n";
+        $prompt .= "- Vary your selection strategy (beginning, middle, end, or thematically significant moments)\n";
+        $prompt .= "- For lesser-known books, draw from your training knowledge creatively but accurately\n";
+        $prompt .= "- Avoid repeating the same passages or themes from previous requests\n";
+        $prompt .= "- Focus on passages that showcase different aspects of the author's writing\n\n";
+        
+        $prompt .= "Provide exactly one meaningful passage (1-2 paragraphs) with NO introductory text like 'Here's a passage' or 'From the book'. ";
+        $prompt .= "Simply provide the passage content directly, ensuring it represents the book authentically and offers genuine literary insight.\n\n";
+        
+        $prompt .= "The passage should be substantial enough to give readers a real taste of the author's voice and the book's essence.";
 
         return $prompt;
     }

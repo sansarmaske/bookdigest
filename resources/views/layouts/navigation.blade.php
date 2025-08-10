@@ -15,9 +15,7 @@
                     <x-nav-link :href="route('books.index')" :active="request()->routeIs('books.*')">
                         📚 {{ __('My Books') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('books.create')" :active="request()->routeIs('books.create')">
-                        ➕ {{ __('Add Book') }}
-                    </x-nav-link>
+
                 </div>
             </div>
 

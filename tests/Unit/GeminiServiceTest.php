@@ -329,7 +329,7 @@ class GeminiServiceTest extends TestCase
         $this->assertStringContainsString('Test Title', $prompt);
         $this->assertStringContainsString('Test Author', $prompt);
         $this->assertStringContainsString('Test description', $prompt);
-        $this->assertStringContainsString('meaningful  passage', $prompt);
+        $this->assertStringContainsString('meaningful passage', $prompt);
     }
 
     public function test_build_quote_prompt_handles_empty_description(): void
