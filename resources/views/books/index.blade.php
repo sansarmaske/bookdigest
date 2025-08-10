@@ -1,10 +1,10 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                 📚 {{ __('My Reading List') }}
             </h2>
-            <a href="{{ route('books.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            <a href="{{ route('books.create') }}" class="bg-blue-500 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                 Add New Book
             </a>
         </div>
@@ -12,38 +12,38 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 text-gray-900 dark:text-gray-100">
                     @if($userBooks->count() > 0)
                         <div class="space-y-6">
                             @foreach($userBooks as $book)
-                                <div class="border border-gray-200 rounded-lg p-6 bg-gray-50">
+                                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-gray-50 dark:bg-gray-700">
                                     <div class="flex justify-between items-start">
                                         <div class="flex-1">
-                                            <h3 class="text-xl font-semibold text-gray-800 mb-2">{{ $book->title }}</h3>
-                                            <p class="text-gray-600 mb-1"><strong>Author:</strong> {{ $book->author }}</p>
+                                            <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">{{ $book->title }}</h3>
+                                            <p class="text-gray-600 dark:text-gray-400 mb-1"><strong>Author:</strong> {{ $book->author }}</p>
 
                                             @if($book->genre)
-                                                <p class="text-gray-600 mb-1"><strong>Genre:</strong> {{ $book->genre }}</p>
+                                                <p class="text-gray-600 dark:text-gray-400 mb-1"><strong>Genre:</strong> {{ $book->genre }}</p>
                                             @endif
 
                                             @if($book->publication_year)
-                                                <p class="text-gray-600 mb-1"><strong>Year:</strong> {{ $book->publication_year }}</p>
+                                                <p class="text-gray-600 dark:text-gray-400 mb-1"><strong>Year:</strong> {{ $book->publication_year }}</p>
                                             @endif
 
                                             @if($book->description)
-                                                <p class="text-gray-700 mt-3">{{ Str::limit($book->description, 200) }}</p>
+                                                <p class="text-gray-700 dark:text-gray-300 mt-3">{{ Str::limit($book->description, 200) }}</p>
                                             @endif
 
                                             <div id="quote-{{ $book->id }}" class="mt-4 hidden">
-                                                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-                                                    <div class="quote-content text-gray-700"></div>
+                                                <div class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 dark:border-blue-400 p-4 rounded">
+                                                    <div class="quote-content text-gray-700 dark:text-gray-300"></div>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div class="ml-6 flex flex-col space-y-2">
-                                            <button class="generate-quote-btn bg-gray-200 hover:bg-gray-300 text-gray-700 hover:text-gray-900 font-bold py-2 px-4 rounded"
+                                            <button class="generate-quote-btn bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white font-bold py-2 px-4 rounded"
                                                     data-book-id="{{ $book->id }}"
                                                     data-book-title="{{ $book->title }}">
                                                 Random Quote
@@ -53,7 +53,7 @@
                                             <form method="POST" action="{{ route('books.destroy', $book) }}" class="inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded w-full"
+                                                <button type="submit" class="bg-gray-400 hover:bg-gray-500 dark:bg-gray-600 dark:hover:bg-gray-500 text-white font-bold py-2 px-4 rounded w-full"
                                                         onclick="return confirm('Are you sure you want to remove this book from your list?')">
                                                     Remove
                                                 </button>
@@ -70,9 +70,9 @@
                     @else
                         <div class="text-center py-12">
                             <div class="text-6xl mb-4">📚</div>
-                            <h3 class="text-2xl font-semibold text-gray-800 mb-2">No books in your reading list yet!</h3>
-                            <p class="text-gray-600 mb-6">Start by adding some books to receive daily quote digests.</p>
-                            <a href="{{ route('books.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg">
+                            <h3 class="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-2">No books in your reading list yet!</h3>
+                            <p class="text-gray-600 dark:text-gray-400 mb-6">Start by adding some books to receive daily quote digests.</p>
+                            <a href="{{ route('books.create') }}" class="bg-blue-500 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg">
                                 Add Your First Book
                             </a>
                         </div>
