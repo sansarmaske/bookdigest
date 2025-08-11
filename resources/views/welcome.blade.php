@@ -185,7 +185,7 @@
                     <p class="text-gray-600 mb-4">Get personalized digests like this every day!</p>
                     @if (Route::has('register'))
                         <a href="{{ route('register') }}" class="bg-black text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors inline-block">
-                            Start Your Free Trial
+                            Get Started
                         </a>
                     @endif
                 </div>
