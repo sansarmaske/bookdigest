@@ -26,6 +26,11 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
+
+        // Verify the user's email to allow access to dashboard
+        $user = \App\Models\User::where('email', 'test@example.com')->first();
+        $user->markEmailAsVerified();
+
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 }
