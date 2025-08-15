@@ -162,7 +162,7 @@ class UserModelTest extends TestCase
     {
         $user = new User;
 
-        $expected = ['name', 'email', 'password'];
+        $expected = ['name', 'email', 'password', 'google_id', 'email_verified_at'];
 
         $this->assertEquals($expected, $user->getFillable());
     }
