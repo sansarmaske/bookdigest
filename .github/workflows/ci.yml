@@ -73,6 +73,7 @@ jobs:
       env:
         DB_CONNECTION: sqlite
         DB_DATABASE: database/database.sqlite
+        SESSION_DRIVER: array
       run: php artisan test
 
     - name: Execute Laravel Pint (Code Style)
