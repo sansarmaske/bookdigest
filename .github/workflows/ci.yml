@@ -74,6 +74,8 @@ jobs:
         DB_CONNECTION: sqlite
         DB_DATABASE: database/database.sqlite
         SESSION_DRIVER: array
+        MAIL_FROM_ADDRESS: test@example.com
+        MAIL_FROM_NAME: Test
       run: php artisan test
 
     - name: Execute Laravel Pint (Code Style)
