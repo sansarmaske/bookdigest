@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SocialiteController;
 
 // Health check endpoints for monitoring
 Route::get('/health', [HealthController::class, 'check'])->name('health.check');
@@ -37,5 +38,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/books/{book}/quote', [BookController::class, 'generateQuote'])->name('books.generate-quote');
     });
 });
+
+// Social login routes
+Route::get('/auth/{provider}/redirect', [SocialiteController::class, 'redirect'])->name('social.redirect');
+Route::get('/auth/{provider}/callback', [SocialiteController::class, 'callback'])->name('social.callback');
 
 require __DIR__.'/auth.php';
