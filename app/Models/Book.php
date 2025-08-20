@@ -21,11 +21,19 @@ class Book extends Model
         'genre',
     ];
 
-    protected $casts = [
-        'publication_year' => 'integer',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-    ];
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'publication_year' => 'integer',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+        ];
+    }
 
     protected $appends = [
         'display_name',

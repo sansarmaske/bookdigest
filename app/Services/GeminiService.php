@@ -16,30 +16,30 @@ class GeminiService
 
     private const SAFETY_THRESHOLD = 'BLOCK_MEDIUM_AND_ABOVE';
 
-    protected $apiKey;
-
-    protected $baseUrl;
-
-    protected $model;
-
-    protected $timeout;
-
-    protected $maxOutputTokens;
-
-    protected $temperature;
-
-    protected $enabled;
-
     public function __construct()
     {
         $this->apiKey = config('services.gemini.api_key');
         $this->baseUrl = config('services.gemini.base_url');
         $this->model = config('services.gemini.model');
-        $this->timeout = config('services.gemini.timeout');
-        $this->maxOutputTokens = config('services.gemini.max_output_tokens');
-        $this->temperature = config('services.gemini.temperature');
-        $this->enabled = config('services.gemini.enabled');
+        $this->timeout = config('services.gemini.timeout', 30);
+        $this->maxOutputTokens = config('services.gemini.max_output_tokens', 1000);
+        $this->temperature = config('services.gemini.temperature', 0.7);
+        $this->enabled = config('services.gemini.enabled', true);
     }
+
+    protected ?string $apiKey;
+
+    protected ?string $baseUrl;
+
+    protected ?string $model;
+
+    protected int $timeout;
+
+    protected int $maxOutputTokens;
+
+    protected float $temperature;
+
+    protected bool $enabled;
 
     public function generateQuote(string $bookTitle, string $author, ?string $description = ''): array
     {

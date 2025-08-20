@@ -24,18 +24,16 @@ class SendDailyDigest extends Command
      */
     protected $description = 'Send daily book quote digest to all users or a specific user';
 
-    protected $quoteService;
-
-    public function __construct(QuoteService $quoteService)
-    {
+    public function __construct(
+        protected QuoteService $quoteService
+    ) {
         parent::__construct();
-        $this->quoteService = $quoteService;
     }
 
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(): int
     {
         $userId = $this->option('user-id');
 

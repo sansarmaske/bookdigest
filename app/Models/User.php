@@ -48,7 +48,7 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-    public function books()
+    public function books(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
         return $this->belongsToMany(Book::class, 'user_books')
             ->withPivot('read_at')
