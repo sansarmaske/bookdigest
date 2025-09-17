@@ -4,12 +4,13 @@
       "Bash(php artisan make:model:*)",
       "Bash(npm install:*)",
       "Bash(npm run dev:*)",
-      "Bash(crontab:*)"
+      "Bash(crontab:*)",
+      "mcp__laravel-boost__get-absolute-url"
     ],
     "deny": []
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "laravel-boost"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }
