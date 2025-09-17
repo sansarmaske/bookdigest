@@ -4,8 +4,9 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use App\Contracts\AIServiceInterface;
 
-class GeminiService
+class GeminiService implements AIServiceInterface
 {
     // Constants for configuration
     private const MIN_TITLE_LENGTH = 3;
@@ -807,5 +808,17 @@ Only include well-known, published books. Provide accurate information only.";
             'content' => $reflection,
             'source' => 'fallback',
         ];
+    }
+
+    public function isAvailable(): bool
+    {
+        return $this->enabled &&
+               $this->apiKey &&
+               $this->apiKey !== 'your-gemini-api-key-here';
+    }
+
+    public function getProviderName(): string
+    {
+        return 'gemini';
     }
 }

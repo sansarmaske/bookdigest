@@ -52,6 +52,21 @@ return [
         'enabled' => env('GEMINI_ENABLED', true),
     ],
 
+    'groq' => [
+        'api_key' => env('GROQ_API_KEY'),
+        'base_url' => env('GROQ_BASE_URL', 'https://api.groq.com/openai/v1'),
+        'model' => env('GROQ_MODEL', 'llama-3.3-70b-versatile'),
+        'timeout' => env('GROQ_TIMEOUT', 30),
+        'max_tokens' => env('GROQ_MAX_TOKENS', 1000),
+        'temperature' => env('GROQ_TEMPERATURE', 0.7),
+        'enabled' => env('GROQ_ENABLED', true),
+    ],
+
+    'ai' => [
+        'default_provider' => env('AI_DEFAULT_PROVIDER', 'groq'),
+        'fallback_provider' => env('AI_FALLBACK_PROVIDER', 'gemini'),
+    ],
+
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),

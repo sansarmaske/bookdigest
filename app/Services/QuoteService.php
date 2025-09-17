@@ -6,11 +6,12 @@ use App\Models\Book;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use App\Contracts\AIServiceInterface;
 
 class QuoteService
 {
     public function __construct(
-        protected GeminiService $geminiService
+        protected AIServiceInterface $aiService
     ) {}
 
     public function generateDailyQuotesForUser(User $user, ?int $maxBooks = null): array
@@ -125,7 +126,7 @@ class QuoteService
         }
 
         try {
-            $result = $this->geminiService->generateQuote(
+            $result = $this->aiService->generateQuote(
                 $book->title,
                 $book->author,
                 $book->description ?? ''
@@ -136,6 +137,8 @@ class QuoteService
                     'book_id' => $book->id,
                     'book_title' => $book->title,
                     'quote_length' => strlen($result['quote'] ?? ''),
+                    'provider' => $this->aiService->getProviderName(),
+                    'source' => $result['source'] ?? 'unknown',
                 ]);
             }
 
@@ -194,7 +197,7 @@ class QuoteService
             $snippetQuotes = [];
 
             foreach ($selectedBooks as $book) {
-                $quoteResult = $this->geminiService->generateQuote(
+                $quoteResult = $this->aiService->generateQuote(
                     $book->title,
                     $book->author,
                     $book->description ?? ''
