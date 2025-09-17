@@ -247,10 +247,10 @@ class GeminiService
         $prompt .= "- Avoid repeating the same passages or themes from previous requests\n";
         $prompt .= "- Focus on passages that showcase different aspects of the author's writing\n\n";
 
-        $prompt .= "Provide exactly one meaningful passage (1-2 paragraphs) with NO introductory text like 'Here's a passage' or 'From the book'. ";
+        $prompt .= "Provide exactly one meaningful passage (1 short paragraph maximum) with NO introductory text like 'Here's a passage' or 'From the book'. ";
         $prompt .= "Simply provide the passage content directly, ensuring it represents the book authentically and offers genuine literary insight.\n\n";
 
-        $prompt .= "The passage should be substantial enough to give readers a real taste of the author's voice and the book's essence.";
+        $prompt .= "The passage should be concise yet impactful to give readers a real taste of the author's voice and the book's essence.";
 
         return $prompt;
     }
@@ -623,7 +623,7 @@ Only include well-known, published books. Provide accurate information only.";
 
         $prompt .= "Requirements:\n";
         $prompt .= "- Choose a different, random section each time to avoid repetition\n";
-        $prompt .= "- Make it substantial (100-200 words) to give readers a real taste of the book\n";
+        $prompt .= "- Keep it concise (2-3 sentences, maximum 1 short paragraph)\n";
         $prompt .= "- Select passages that showcase the author's unique voice and style\n";
         $prompt .= "- Focus on memorable, impactful moments from the book\n";
         $prompt .= "- Provide ONLY the excerpt content, no introductory text\n\n";
