@@ -387,25 +387,26 @@ class GroqService implements AIServiceInterface
         $randomSeed = mt_rand(1, 1000000);
 
         $prompt = "Random seed: {$randomSeed}\n\n";
-        $prompt .= "I need a book digest passage from '{$bookTitle}' by {$author}. ";
+        $prompt .= "I need an ACTUAL, REAL passage from the published book '{$bookTitle}' by {$author}. ";
 
         if (! empty($description)) {
             $prompt .= "Book context: {$description}. ";
         }
 
-        $prompt .= "Please select {$randomPassageType} and {$randomAnalysisAngle}.\n\n";
+        $prompt .= "Please find and extract {$randomPassageType} and {$randomAnalysisAngle}.\n\n";
 
-        $prompt .= "IMPORTANT VARIETY REQUIREMENTS:\n";
-        $prompt .= "- Choose a DIFFERENT section of the book each time\n";
-        $prompt .= "- Vary your selection strategy (beginning, middle, end, or thematically significant moments)\n";
-        $prompt .= "- For lesser-known books, draw from your training knowledge creatively but accurately\n";
-        $prompt .= "- Avoid repeating the same passages or themes from previous requests\n";
+        $prompt .= "CRITICAL REQUIREMENTS - NO EXCEPTIONS:\n";
+        $prompt .= "- You MUST provide an EXACT quote from the actual published book\n";
+        $prompt .= "- DO NOT create, paraphrase, or generate new content\n";
+        $prompt .= "- DO NOT make up quotes that sound like the author\n";
+        $prompt .= "- If you cannot recall the exact text, return: 'Unable to locate exact passage'\n";
+        $prompt .= "- Choose a DIFFERENT section of the book each time for variety\n";
         $prompt .= "- Focus on passages that showcase different aspects of the author's writing\n\n";
 
-        $prompt .= "Provide exactly one meaningful passage (1 short paragraph maximum) with NO introductory text like 'Here's a passage' or 'From the book'. ";
-        $prompt .= "Simply provide the passage content directly, ensuring it represents the book authentically and offers genuine literary insight.\n\n";
+        $prompt .= 'Provide exactly one authentic passage (1 short paragraph maximum) with NO introductory text. ';
+        $prompt .= "Simply provide the EXACT passage content as it appears in the published book.\n\n";
 
-        $prompt .= "The passage should be concise yet impactful to give readers a real taste of the author's voice and the book's essence.";
+        $prompt .= "If you cannot provide an exact quote, respond with: 'Unable to locate exact passage from {$bookTitle} by {$author}.'";
 
         return $prompt;
     }
@@ -415,19 +416,22 @@ class GroqService implements AIServiceInterface
         $randomSeed = mt_rand(1, 1000000);
 
         $prompt = "Random seed: {$randomSeed}\n\n";
-        $prompt .= "Generate a compelling paragraph-long excerpt from '{$bookTitle}' by {$author}. ";
+        $prompt .= "Extract an ACTUAL, REAL excerpt from the published book '{$bookTitle}' by {$author}. ";
 
         if (! empty($description)) {
             $prompt .= "Book context: {$description}. ";
         }
 
-        $prompt .= "Requirements:\n";
+        $prompt .= "CRITICAL REQUIREMENTS - NO EXCEPTIONS:\n";
+        $prompt .= "- You MUST provide an EXACT excerpt from the actual published book\n";
+        $prompt .= "- DO NOT create, paraphrase, or generate new content\n";
+        $prompt .= "- DO NOT make up text that sounds like the author\n";
+        $prompt .= "- If you cannot recall exact text, return: 'Unable to locate exact excerpt'\n";
         $prompt .= "- Choose a different, random section each time to avoid repetition\n";
         $prompt .= "- Keep it concise (2-3 sentences, maximum 1 short paragraph)\n";
         $prompt .= "- Select passages that showcase the author's unique voice and style\n";
-        $prompt .= "- Focus on memorable, impactful moments from the book\n";
         $prompt .= "- Provide ONLY the excerpt content, no introductory text\n\n";
-        $prompt .= "The excerpt should be engaging and representative of the book's essence.";
+        $prompt .= "If you cannot provide an exact excerpt, respond with: 'Unable to locate exact excerpt from {$bookTitle} by {$author}.'";
 
         return $prompt;
     }
@@ -456,18 +460,22 @@ class GroqService implements AIServiceInterface
         $randomSeed = mt_rand(1, 1000000);
 
         $prompt = "Random seed: {$randomSeed}\n\n";
-        $prompt .= "Select a profound, thought-provoking quote from '{$bookTitle}' by {$author}. ";
+        $prompt .= "Extract an ACTUAL, REAL quote from the published book '{$bookTitle}' by {$author}. ";
 
         if (! empty($description)) {
             $prompt .= "Book context: {$description}. ";
         }
 
-        $prompt .= "Requirements:\n";
+        $prompt .= "CRITICAL REQUIREMENTS - NO EXCEPTIONS:\n";
+        $prompt .= "- You MUST provide an EXACT quote from the actual published book\n";
+        $prompt .= "- DO NOT create, paraphrase, or generate new content\n";
+        $prompt .= "- DO NOT make up quotes that sound like the author\n";
+        $prompt .= "- If you cannot recall exact text, return: 'Unable to locate exact quote'\n";
         $prompt .= "- Choose a different quote each time to ensure variety\n";
         $prompt .= "- Select quotes that are philosophically rich or emotionally resonant\n";
         $prompt .= "- Focus on quotes that make readers pause and think\n";
-        $prompt .= "- Provide ONLY the quote text, no context or explanation\n";
-        $prompt .= "- Ensure the quote is authentic to the book and author's voice\n";
+        $prompt .= "- Provide ONLY the quote text, no context or explanation\n\n";
+        $prompt .= "If you cannot provide an exact quote, respond with: 'Unable to locate exact quote from {$bookTitle} by {$author}.'";
 
         return $prompt;
     }
