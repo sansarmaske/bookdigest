@@ -28,17 +28,10 @@ class AIServiceProvider extends ServiceProvider
             $defaultProvider = config('services.ai.default_provider', 'groq');
 
             $service = match ($defaultProvider) {
-                'groq' => $app->make(GroqService::class),
-                'gemini' => $app->make(GeminiService::class),
-                default => $app->make(GroqService::class),
+                'groq' => new GroqService,
+                'gemini' => new GeminiService,
+                default => new GroqService,
             };
-
-            // Log which provider is being used
-            \Illuminate\Support\Facades\Log::info('AI Service Provider Resolved', [
-                'configured_provider' => $defaultProvider,
-                'actual_provider' => $service->getProviderName(),
-                'service_available' => $service->isAvailable(),
-            ]);
 
             return $service;
         });
@@ -48,9 +41,9 @@ class AIServiceProvider extends ServiceProvider
             $fallbackProvider = config('services.ai.fallback_provider', 'gemini');
 
             return match ($fallbackProvider) {
-                'groq' => $app->make(GroqService::class),
-                'gemini' => $app->make(GeminiService::class),
-                default => $app->make(GeminiService::class),
+                'groq' => new GroqService,
+                'gemini' => new GeminiService,
+                default => new GeminiService,
             };
         });
     }
