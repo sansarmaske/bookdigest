@@ -52,9 +52,6 @@ class DailyBookDigest extends Mailable // implements ShouldQueue - disabled for 
                 'quotes' => $this->quotes,
                 'date' => now()->format('F j, Y'),
                 'todaysSnippet' => $this->digestSections['todaysSnippet'] ?? null,
-                'crossBookConnection' => $this->digestSections['crossBookConnection'] ?? null,
-                'quoteToPonder' => $this->digestSections['quoteToPonder'] ?? null,
-                'todaysReflection' => $this->digestSections['todaysReflection'] ?? null,
             ]
         );
     }

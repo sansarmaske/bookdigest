@@ -182,85 +182,40 @@ class QuoteService
     }
 
     /**
-     * Generate all 4 sections for the enhanced daily digest
+     * Generate today's snippet section with 5 random book quotes
      */
     protected function generateDigestSections(Collection $books, User $user): array
     {
         $sections = [];
 
         try {
-            // 1. Today's Snippet - random book
-            $snippetBook = $books->random();
-            $snippetResult = $this->geminiService->generateTodaysSnippet(
-                $snippetBook->title,
-                $snippetBook->author,
-                $snippetBook->description ?? ''
-            );
+            // Today's Snippet - 5 random book quotes
+            $selectedBooks = $this->selectRandomBooks($books, 5);
+            $snippetQuotes = [];
 
-            if ($snippetResult['success']) {
-                $sections['todaysSnippet'] = [
-                    'book' => $snippetBook,
-                    'quote_content' => $snippetResult['content'],
-                ];
-            }
+            foreach ($selectedBooks as $book) {
+                $quoteResult = $this->geminiService->generateQuote(
+                    $book->title,
+                    $book->author,
+                    $book->description ?? ''
+                );
 
-            // 2. Cross-book Connection - use multiple books
-            if ($books->count() >= 2) {
-                $connectionBooks = $books->take(3)->map(function ($book) {
-                    return [
-                        'title' => $book->title,
-                        'author' => $book->author,
-                    ];
-                })->toArray();
-
-                $connectionResult = $this->geminiService->generateCrossBookConnection($connectionBooks);
-
-                if ($connectionResult['success']) {
-                    $sections['crossBookConnection'] = [
-                        'connection' => $connectionResult['content'],
-                        'books' => $books->take(3)->pluck('title')->implode(', '),
+                if ($quoteResult['success']) {
+                    $snippetQuotes[] = [
+                        'book' => $book,
+                        'quote_content' => $quoteResult['quote'],
                     ];
                 }
             }
 
-            // 3. Quote to Ponder - different random book
-            $ponderBook = $books->count() > 1 ?
-                $books->except($snippetBook->id)->random() :
-                $snippetBook;
-
-            $ponderResult = $this->geminiService->generateQuoteToPonder(
-                $ponderBook->title,
-                $ponderBook->author,
-                $ponderBook->description ?? ''
-            );
-
-            if ($ponderResult['success']) {
-                $sections['quoteToPonder'] = [
-                    'book' => $ponderBook,
-                    'quote_content' => $ponderResult['content'],
-                ];
-            }
-
-            // 4. Today's Reflection - based on all books
-            $reflectionBooks = $books->map(function ($book) {
-                return [
-                    'title' => $book->title,
-                    'author' => $book->author,
-                ];
-            })->toArray();
-
-            $reflectionResult = $this->geminiService->generateTodaysReflection($reflectionBooks);
-
-            if ($reflectionResult['success']) {
-                $sections['todaysReflection'] = [
-                    'reflection' => $reflectionResult['content'],
-                ];
+            if (! empty($snippetQuotes)) {
+                $sections['todaysSnippet'] = $snippetQuotes;
             }
 
             Log::info('Digest sections generated', [
                 'user_id' => $user->id,
                 'sections_count' => count($sections),
-                'sections' => array_keys($sections),
+                'snippet_quotes_count' => count($snippetQuotes),
             ]);
 
         } catch (\Exception $e) {

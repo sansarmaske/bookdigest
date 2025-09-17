@@ -103,47 +103,21 @@
             "A reader lives a thousand lives before he dies. The man who never reads lives only one." - George R.R. Martin
         </div>
 
-        @if(empty($quotes))
+        @if(empty($quotes) && empty($todaysSnippet))
             <p>We couldn't generate any quotes today. Please make sure you have books added to your reading list!</p>
         @else
             <!-- Today's Snippet Section -->
             <div class="quote-section" style="border-left-color: #4299e1;">
-                <h2 style="color: #2d3748; font-size: 20px; margin-bottom: 15px; font-weight: bold;">📖 Today's Snippet</h2>
-                @if(isset($todaysSnippet))
-                    <div class="book-info">
-                        From <span class="book-title">"{{ $todaysSnippet['book']->title }}"</span> by {{ $todaysSnippet['book']->author }}
-                    </div>
-                    <div class="quote-content">{{ $todaysSnippet['quote_content'] }}</div>
-                @endif
-            </div>
-
-            <!-- Cross-book Connection Section -->
-            <div class="quote-section" style="border-left-color: #48bb78;">
-                <h2 style="color: #2d3748; font-size: 20px; margin-bottom: 15px; font-weight: bold;">🔗 Cross-Book Connection</h2>
-                @if(isset($crossBookConnection))
-                    <div class="quote-content">{{ $crossBookConnection['connection'] }}</div>
-                    <div style="margin-top: 10px; font-size: 14px; color: #718096;">
-                        <strong>Books connected:</strong> {{ $crossBookConnection['books'] }}
-                    </div>
-                @endif
-            </div>
-
-            <!-- Quote to Ponder Section -->
-            <div class="quote-section" style="border-left-color: #9f7aea;">
-                <h2 style="color: #2d3748; font-size: 20px; margin-bottom: 15px; font-weight: bold;">💭 Quote to Ponder</h2>
-                @if(isset($quoteToPonder))
-                    <div class="book-info">
-                        From <span class="book-title">"{{ $quoteToPonder['book']->title }}"</span> by {{ $quoteToPonder['book']->author }}
-                    </div>
-                    <div class="quote-content" style="font-style: italic; font-size: 16px;">"{{ $quoteToPonder['quote_content'] }}"</div>
-                @endif
-            </div>
-
-            <!-- Today's Reflection Section -->
-            <div class="quote-section" style="border-left-color: #ed8936;">
-                <h2 style="color: #2d3748; font-size: 20px; margin-bottom: 15px; font-weight: bold;">🎯 Today's Reflection</h2>
-                @if(isset($todaysReflection))
-                    <div class="quote-content">{{ $todaysReflection['reflection'] }}</div>
+                <h2 style="color: #2d3748; font-size: 20px; margin-bottom: 15px; font-weight: bold;">📖 Today's Snippets</h2>
+                @if(isset($todaysSnippet) && is_array($todaysSnippet))
+                    @foreach($todaysSnippet as $snippet)
+                        <div style="margin-bottom: 25px; @if(!$loop->last) border-bottom: 1px solid #e2e8f0; padding-bottom: 20px; @endif">
+                            <div class="book-info">
+                                From <span class="book-title">"{{ $snippet['book']->title }}"</span> by {{ $snippet['book']->author }}
+                            </div>
+                            <div class="quote-content">{{ $snippet['quote_content'] }}</div>
+                        </div>
+                    @endforeach
                 @endif
             </div>
         @endif
