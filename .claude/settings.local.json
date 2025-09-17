@@ -7,7 +7,8 @@
       "Bash(crontab:*)",
       "mcp__laravel-boost__get-absolute-url",
       "mcp__laravel-boost__tinker",
-      "Bash(php:*)"
+      "Bash(php:*)",
+      "Bash(composer format:*)"
     ],
     "deny": []
   },
