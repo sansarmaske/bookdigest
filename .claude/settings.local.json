@@ -8,7 +8,12 @@
       "mcp__laravel-boost__get-absolute-url",
       "mcp__laravel-boost__tinker",
       "Bash(php:*)",
-      "Bash(composer format:*)"
+      "Bash(composer format:*)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_click",
+      "mcp__serena__find_file",
+      "mcp__serena__search_for_pattern"
     ],
     "deny": []
   },

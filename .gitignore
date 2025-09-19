@@ -100,4 +100,5 @@ pids
 Dockerfile*
 docker-compose*
 .dockerignore
-
+.playwright-mcp/
+.serena/
